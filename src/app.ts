@@ -38,7 +38,8 @@ const sketch = (p5: P5) => {
         track.takeScreenshotIfNeeded();
         car.update();
         car.checkIsOnTrack(track.image);
-        car.look([...track.rightBorder, ...track.leftBorder]);
+        car.look([track.rightBorder, track.leftBorder]);
+        car.driveDecision();
         car.show();
         drawFPS();
 

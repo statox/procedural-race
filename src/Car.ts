@@ -11,6 +11,8 @@ export class Car {
     speed: P5.Vector;
     crashed: boolean;
     rays: Ray[];
+    sensorDistances: number[];
+    sensorPoints: P5.Vector[];
 
     constructor(p5: P5, params?: {pos?: P5.Vector | {x: number; y: number}}) {
         this.p5 = p5;
@@ -22,7 +24,7 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = this.p5.createVector(2, 0);
+        this.speed = this.p5.createVector(8, 0);
 
         this.rays = [];
         this.crashed = false;
@@ -41,6 +43,11 @@ export class Car {
         }
         this.p5.strokeWeight(1);
         this.p5.circle(this.pos.x, this.pos.y, 15);
+
+        this.p5.stroke(255, 100);
+        for (const sensorPoint of this.sensorPoints) {
+            this.p5.line(this.pos.x, this.pos.y, sensorPoint.x, sensorPoint.y);
+        }
     }
 
     update() {
@@ -51,6 +58,20 @@ export class Car {
         this.pos.y = this.p5.constrain(this.pos.y, 0, this.p5.height);
 
         // }
+    }
+
+    driveDecision() {
+        let right = 0;
+        let left = 0;
+        for (let i = 0; i < this.sensorDistances.length / 2; i++) {
+            left += this.sensorDistances[i];
+            right += this.sensorDistances[this.sensorDistances.length - 1 - i];
+        }
+        if (right > left) {
+            this.turn('RIGHT');
+        } else {
+            this.turn('LEFT');
+        }
     }
 
     turn(dir: 'LEFT' | 'RIGHT') {
@@ -66,10 +87,14 @@ export class Car {
         }
     }
 
-    look(points: Point[]) {
+    look(borders: Point[][]) {
         const walls = [];
-        for (let i = 0; i < points.length - 1; i++) {
-            walls.push([points[i], points[i + 1]]);
+        this.sensorDistances = [];
+        this.sensorPoints = [];
+        for (const points of borders) {
+            for (let i = 0; i < points.length - 1; i++) {
+                walls.push([points[i], points[i + 1]]);
+            }
         }
         let distances = [];
         for (let i = 0; i < this.rays.length; i++) {
@@ -87,13 +112,13 @@ export class Car {
                 }
             }
             if (closest) {
-                this.p5.stroke(255, 100);
-                this.p5.line(this.pos.x, this.pos.y, closest.x, closest.y);
+                this.sensorPoints.push(closest);
                 distances.push(this.p5.dist(this.pos.x, this.pos.y, closest.x, closest.y));
             } else {
                 distances.push(-1.0);
             }
         }
+        this.sensorDistances = distances;
     }
 
     // Given the image representing the track and the color of the background
