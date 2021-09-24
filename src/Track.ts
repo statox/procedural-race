@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import {generateBezierCurve} from './bezier';
 import {Point} from './Point';
+import {Screenshotter} from './Screenshotter';
 import {angleToVertical, threePointsAngle, collideLineLine} from './utils';
 const hull = require('hull.js');
 
@@ -14,6 +15,7 @@ export class Track {
     difficulty: number;
     minHullAngle: number;
     pathWidth: number;
+    image: P5.Image;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -28,6 +30,7 @@ export class Track {
     }
 
     reset() {
+        this.image = null;
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
         // this.generate5Points();
@@ -66,6 +69,13 @@ export class Track {
                 this.p5.strokeWeight(this.pathWidth);
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
+        }
+    }
+
+    takeScreenshotIfNeeded() {
+        if (!this.image) {
+            const screenshotter = new Screenshotter(this.p5);
+            this.image = screenshotter.screenshot();
         }
     }
 

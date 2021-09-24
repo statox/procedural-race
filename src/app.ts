@@ -1,5 +1,7 @@
 import P5 from 'p5';
+import {Car} from './Car';
 import {Point} from './Point';
+import {Screenshotter} from './Screenshotter';
 import './styles.scss';
 import {Track} from './Track';
 const config = require('./config.json');
@@ -7,9 +9,14 @@ const config = require('./config.json');
 const sketch = (p5: P5) => {
     const H = config.dimensions.height;
     const W = config.dimensions.width;
+    const offTrackColor = config.offTrackColor;
     let frameRateHistory = new Array(10).fill(0);
 
     let track;
+    let car;
+    let screenshotter;
+    let trackImage;
+
     // The sketch setup method
     p5.setup = () => {
         // Creating and positioning the canvas
@@ -17,25 +24,33 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
-        resetTrack();
+        car = new Car(p5);
+        screenshotter = new Screenshotter(p5);
     };
 
     // The sketch draw method
     p5.draw = () => {
-        // p5.background(0, 0, 0);
-        p5.background('#085413');
+        p5.background(offTrackColor);
         track.show();
+        // The first time we draw the track we need to keep track of its image representation
+        track.takeScreenshotIfNeeded();
+        car.update();
+        car.checkIsOnTrack(track.image);
+        car.show();
         drawFPS();
     };
 
-    p5.mousePressed = () => {
-        // track.pushApart();
-        // track.fixHullAngles();
+    p5.mousePressed = () => {};
+
+    p5.keyPressed = () => {
+        if (p5.keyCode === p5.RETURN) {
+            resetTrack();
+        }
     };
 
     const resetTrack = () => {
+        trackImage = null;
         track.reset();
-        setTimeout(resetTrack, 1000);
     };
 
     const drawFPS = () => {
