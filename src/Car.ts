@@ -24,7 +24,7 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = this.p5.createVector(8, 0);
+        this.speed = this.p5.createVector(2, 0);
 
         this.rays = [];
         this.crashed = false;
@@ -51,13 +51,9 @@ export class Car {
     }
 
     update() {
-        // if (!this.crashed) {
         this.pos.add(this.speed);
-
         this.pos.x = this.p5.constrain(this.pos.x, 0, this.p5.width);
         this.pos.y = this.p5.constrain(this.pos.y, 0, this.p5.height);
-
-        // }
     }
 
     driveDecision() {
@@ -72,6 +68,14 @@ export class Car {
         } else {
             this.turn('LEFT');
         }
+    }
+
+    accelerate() {
+        this.speed.mult(1.3);
+    }
+
+    deccelerate() {
+        this.speed.mult(0.9);
     }
 
     turn(dir: 'LEFT' | 'RIGHT') {

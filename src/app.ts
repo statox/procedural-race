@@ -16,6 +16,7 @@ const sketch = (p5: P5) => {
     let car;
     let screenshotter;
     let trackImage;
+    let lastTick;
 
     // The sketch setup method
     p5.setup = () => {
@@ -44,6 +45,14 @@ const sketch = (p5: P5) => {
         drawFPS();
 
         driveCar();
+        if (!lastTick || p5.millis() - 2 * 1000 > lastTick) {
+            lastTick = p5.millis();
+            car.accelerate();
+        }
+        if (car.crashed) {
+            console.log('Crashed at', Math.floor(car.speed.mag()));
+            resetTrack();
+        }
     };
 
     p5.mousePressed = () => {
@@ -56,6 +65,12 @@ const sketch = (p5: P5) => {
         }
         if (p5.keyIsDown(p5.RIGHT_ARROW)) {
             car.turn('RIGHT');
+        }
+        if (p5.keyIsDown(p5.UP_ARROW)) {
+            car.accelerate();
+        }
+        if (p5.keyIsDown(p5.DOWN_ARROW)) {
+            car.deccelerate();
         }
     };
     p5.keyPressed = () => {

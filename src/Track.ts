@@ -41,7 +41,6 @@ export class Track {
         this.calculateHull();
         this.fixHullAngles();
         if (this.checkForIntersection()) {
-            console.log('resetting because of loop');
             this.reset();
         }
         this.calculateInterpolatedHull();
@@ -64,22 +63,12 @@ export class Track {
             // this.hull[this.hull.length - 1].show();
         }
 
-        if (this.interpolatedHull) {
-            for (let i = 0; i < this.interpolatedHull.length - 1; i++) {
-                const A = this.interpolatedHull[i].pos;
-                const B = this.interpolatedHull[i + 1].pos;
-                this.p5.stroke('#222226');
-                this.p5.strokeWeight(this.pathWidth);
-                this.p5.line(A.x, A.y, B.x, B.y);
-            }
-        }
-
         if (this.rightBorder) {
             for (let i = 0; i <= this.rightBorder.length - 1; i++) {
                 const A = this.rightBorder[i].pos;
                 const B = this.rightBorder[(i + 1) % this.rightBorder.length].pos;
-                this.p5.stroke(i % 2 ? 'red' : 'black');
-                this.p5.strokeWeight(3);
+                this.p5.stroke(i % 2 ? 'red' : 'white');
+                this.p5.strokeWeight(5);
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
         }
@@ -88,7 +77,17 @@ export class Track {
                 const A = this.leftBorder[i].pos;
                 const B = this.leftBorder[(i + 1) % this.leftBorder.length].pos;
                 this.p5.stroke(i % 2 ? 'red' : 'white');
-                this.p5.strokeWeight(3);
+                this.p5.strokeWeight(5);
+                this.p5.line(A.x, A.y, B.x, B.y);
+            }
+        }
+
+        if (this.interpolatedHull) {
+            for (let i = 0; i < this.interpolatedHull.length - 1; i++) {
+                const A = this.interpolatedHull[i].pos;
+                const B = this.interpolatedHull[i + 1].pos;
+                this.p5.stroke('#222226');
+                this.p5.strokeWeight(this.pathWidth);
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
         }
@@ -343,8 +342,6 @@ export class Track {
         this.leftBorder = lefts.map(
             (pos) => new Point(this.p5, {pos, color: this.p5.color('rgba(0, 250, 0, 0.4)'), r: 3, skipContrain: true})
         );
-        this.rightBorder.pop();
-        this.leftBorder.pop();
 
         this.removeBorderIntersection();
     }
@@ -405,24 +402,10 @@ export class Track {
                     this.leftBorder.splice(indexB + 1, 1);
                     pointsRemoved++;
                 }
-                /*
-                 * let k = indexB + 1;
-                 * while (k <= indexD) {
-                 *     this.leftBorder.splice(indexB, 1);
-                 *     k++;
-                 *     pointsRemoved++;
-                 * }
-                 */
                 i--;
             }
 
             i++;
-        }
-
-        if (pointsRemoved > 0 || intersectionFound > 0) {
-            console.log(intersectionFound, 'intersections', pointsRemoved, 'points removed');
-        } else {
-            console.log('no intersection found');
         }
 
         return pointsRemoved;
