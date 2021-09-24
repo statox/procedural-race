@@ -6,12 +6,20 @@ const offTrackColor = config.offTrackColor;
 export class Car {
     p5: P5;
     pos: P5.Vector;
+    speed: P5.Vector;
     crashed: boolean;
 
-    constructor(p5: P5) {
+    constructor(p5: P5, params?: {pos?: P5.Vector | {x: number; y: number}}) {
         this.p5 = p5;
-        this.pos = p5.createVector(p5.width / 2, p5.height / 2);
         this.crashed = false;
+        if (!params?.pos) {
+            this.pos = this.p5.createVector(10, 10);
+        } else if (params.pos instanceof P5.Vector) {
+            this.pos = params.pos;
+        } else {
+            this.pos = this.p5.createVector(params.pos.x, params.pos.y);
+        }
+        this.speed = this.p5.createVector(1, 0);
     }
 
     show() {
@@ -26,10 +34,7 @@ export class Car {
     }
 
     update() {
-        const x = this.p5.constrain(this.p5.mouseX, 0, this.p5.width);
-        const y = this.p5.constrain(this.p5.mouseY, 0, this.p5.height);
-        this.pos.x = x;
-        this.pos.y = y;
+        // this.pos.add(this.speed);
     }
 
     // Given the image representing the track and the color of the background

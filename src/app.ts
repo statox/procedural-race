@@ -24,7 +24,7 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
-        car = new Car(p5);
+        car = new Car(p5, {pos: track.startingPosition.pos});
         screenshotter = new Screenshotter(p5);
     };
 
@@ -51,6 +51,7 @@ const sketch = (p5: P5) => {
     const resetTrack = () => {
         trackImage = null;
         track.reset();
+        car.pos = track.startingPosition.pos.copy();
     };
 
     const drawFPS = () => {
