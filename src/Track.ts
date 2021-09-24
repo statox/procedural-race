@@ -10,6 +10,8 @@ export class Track {
     points: Point[];
     hull: Point[];
     interpolatedHull: Point[];
+    rightBorder: Point[];
+    leftBorder: Point[];
     numberOfInitialPoints: number;
     minDistanceBetweenInitialPoint: number;
     difficulty: number;
@@ -21,11 +23,11 @@ export class Track {
     constructor(p5: P5) {
         this.p5 = p5;
         this.difficulty = 500; // 0 very hard (concave hull) - Infinity very easy (convex hull)
-        this.numberOfInitialPoints = 10;
+        this.numberOfInitialPoints = 6;
         this.minDistanceBetweenInitialPoint = 10;
-        this.minHullAngle = this.p5.radians(60);
+        this.minHullAngle = this.p5.radians(95);
         this.points = [];
-        this.pathWidth = 50;
+        this.pathWidth = 100;
 
         this.reset();
     }
@@ -43,6 +45,7 @@ export class Track {
             this.reset();
         }
         this.calculateInterpolatedHull();
+        this.calculateBorders();
     }
 
     show() {
@@ -63,11 +66,29 @@ export class Track {
 
         if (this.interpolatedHull) {
             for (let i = 0; i < this.interpolatedHull.length - 1; i++) {
-                // this.interpolatedHull[i].show(true);
                 const A = this.interpolatedHull[i].pos;
                 const B = this.interpolatedHull[i + 1].pos;
                 this.p5.stroke('#222226');
                 this.p5.strokeWeight(this.pathWidth);
+                this.p5.line(A.x, A.y, B.x, B.y);
+            }
+        }
+
+        if (this.rightBorder) {
+            for (let i = 0; i <= this.rightBorder.length - 1; i++) {
+                const A = this.rightBorder[i].pos;
+                const B = this.rightBorder[(i + 1) % this.rightBorder.length].pos;
+                this.p5.stroke(i % 2 ? 'red' : 'black');
+                this.p5.strokeWeight(3);
+                this.p5.line(A.x, A.y, B.x, B.y);
+            }
+        }
+        if (this.leftBorder) {
+            for (let i = 0; i <= this.leftBorder.length - 1; i++) {
+                const A = this.leftBorder[i].pos;
+                const B = this.leftBorder[(i + 1) % this.leftBorder.length].pos;
+                this.p5.stroke(i % 2 ? 'red' : 'white');
+                this.p5.strokeWeight(3);
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
         }
@@ -205,10 +226,6 @@ export class Track {
             fixedAngles = this._fixHullAngles();
             i++;
         }
-        if (fixedAngles > 0) {
-            console.log('angles issue');
-        }
-
         return i;
     }
     _fixHullAngles() {
@@ -292,7 +309,122 @@ export class Track {
         this.hull.pop(); // this.calculateHull() adds the first point as the last one, remove it for now
         const points = this.hull.map((p) => p.pos);
         const H = generateBezierCurve(points, 5);
-        this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('red'), r: 3}));
+        this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('blue'), r: 3}));
         this.startingPosition = this.interpolatedHull[0].pos.copy();
+    }
+
+    calculateBorders() {
+        const segments = 50;
+        const step = Math.floor(this.interpolatedHull.length / segments);
+        const lefts = [];
+        const rights = [];
+        for (let i = 0; i < this.interpolatedHull.length - 1; i += step) {
+            const anchor = this.interpolatedHull[i].pos;
+            const mover = this.interpolatedHull[i + 1].pos;
+            const diff = mover.copy().sub(anchor);
+
+            const left = diff
+                .copy()
+                .setMag(this.pathWidth / 2)
+                .rotate(this.p5.PI / 2)
+                .add(anchor);
+            const right = diff
+                .copy()
+                .setMag(this.pathWidth / 2)
+                .rotate(-this.p5.PI / 2)
+                .add(anchor);
+
+            rights.push(right);
+            lefts.push(left);
+        }
+        this.rightBorder = rights.map(
+            (pos) => new Point(this.p5, {pos, color: this.p5.color('rgba(250, 0, 0, 0.4)'), r: 3, skipContrain: true})
+        );
+        this.leftBorder = lefts.map(
+            (pos) => new Point(this.p5, {pos, color: this.p5.color('rgba(0, 250, 0, 0.4)'), r: 3, skipContrain: true})
+        );
+        this.rightBorder.pop();
+        this.leftBorder.pop();
+
+        this.removeBorderIntersection();
+    }
+
+    removeBorderIntersection() {
+        const maxIteration = 100;
+        let removedPoints = 1;
+        let i = 1;
+        // while (i < maxIteration && removedPoints > 0) {
+        while (i < maxIteration) {
+            removedPoints = this._removeBorderIntersection();
+            i++;
+        }
+
+        return i;
+    }
+
+    // The left border tends to have intersections when the track angle is too sharp
+    // this is a small hack which iterates through the segments (AB),
+    // search for an intersecting other segments (CD)
+    // And if an intersection happens move B to the intersection point and
+    // removes the points between B and C
+    _removeBorderIntersection() {
+        let stop = false;
+        let i = 0;
+        let pointsRemoved = 0;
+        let intersectionFound = 0;
+        while (!stop && i < this.leftBorder.length) {
+            const indexA = i % this.leftBorder.length;
+            const indexB = (i + 1) % this.leftBorder.length;
+            const A = this.leftBorder[indexA];
+            const B = this.leftBorder[indexB];
+
+            let j = indexB;
+            let intersection = null as boolean | P5.Vector;
+            let indexC = j;
+            let indexD = (j + 1) % this.leftBorder.length;
+            // while (!intersection && j < this.leftBorder.length) {
+            // Hack to avoid cutting between points 1 and 50 when the loop is placed badly
+            // while (!intersection && j < Math.min(i + 10, this.leftBorder.length)) {
+            while (!intersection && j < i + 10) {
+                indexC = j % this.leftBorder.length;
+                indexD = (j + 1) % this.leftBorder.length;
+                const C = this.leftBorder[indexC];
+                const D = this.leftBorder[indexD];
+
+                intersection = collideLineLine(A, B, C, D);
+                j++;
+            }
+
+            if (intersection) {
+                intersectionFound++;
+                stop = true;
+                B.pos.x = (intersection as P5.Vector).x;
+                B.pos.y = (intersection as P5.Vector).y;
+
+                for (let k = indexB; k < indexC; k++) {
+                    this.leftBorder.splice(indexB + 1, 1);
+                    pointsRemoved++;
+                }
+                /*
+                 * let k = indexB + 1;
+                 * while (k <= indexD) {
+                 *     this.leftBorder.splice(indexB, 1);
+                 *     k++;
+                 *     pointsRemoved++;
+                 * }
+                 */
+                i--;
+            }
+
+            i++;
+        }
+
+        if (pointsRemoved > 0 || intersectionFound > 0) {
+            console.log(intersectionFound, 'intersections', pointsRemoved, 'points removed');
+        } else {
+            console.log('no intersection found');
+        }
+
+        return pointsRemoved;
     }
 }

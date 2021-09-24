@@ -9,7 +9,10 @@ export class Point {
     color: P5.Color;
     r: number;
 
-    constructor(p5: P5, params?: {pos?: P5.Vector | {x: number; y: number}; color?: P5.Color; r?: number}) {
+    constructor(
+        p5: P5,
+        params?: {pos?: P5.Vector | {x: number; y: number}; color?: P5.Color; r?: number; skipContrain?: boolean}
+    ) {
         generatedPoints++;
         this.id = generatedPoints;
         this.p5 = p5;
@@ -24,12 +27,15 @@ export class Point {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
 
-        this.constrain();
+        if (!params.skipContrain) {
+            this.constrain();
+        }
     }
 
     show(disableId?: boolean) {
         this.p5.stroke(this.color);
-        this.p5.noFill();
+        this.p5.strokeWeight(1);
+        disableId ? this.p5.fill(this.color) : this.p5.noFill();
         this.p5.circle(this.pos.x, this.pos.y, this.r);
 
         if (!disableId) {
