@@ -1,6 +1,6 @@
 import P5 from 'p5';
 import {Point} from './Point';
-import {angleToVertical, threePointsAngle} from './utils';
+import {angleToVertical, threePointsAngle, collideLineLine} from './utils';
 const hull = require('hull.js');
 
 export class Track {
@@ -15,17 +15,25 @@ export class Track {
     constructor(p5: P5) {
         this.p5 = p5;
         this.difficulty = 500; // 0 very hard (concave hull) - Infinity very easy (convex hull)
-        this.points = [];
         this.numberOfInitialPoints = 10;
         this.minDistanceBetweenInitialPoint = 10;
         this.minHullAngle = this.p5.radians(60);
+        this.points = [];
 
+        this.reset();
+    }
+
+    reset() {
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
         // this.generate5Points();
         this.pushApart();
         this.calculateHull();
         this.fixHullAngles();
+        if (this.checkForIntersection()) {
+            console.log('resetting because of loop');
+            this.reset();
+        }
     }
 
     show() {
@@ -35,13 +43,13 @@ export class Track {
 
         if (this.hull) {
             for (let i = 0; i < this.hull.length - 1; i++) {
-                this.hull[i].show();
+                // this.hull[i].show();
                 const A = this.hull[i].pos;
                 const B = this.hull[i + 1].pos;
                 this.p5.stroke('green');
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
-            this.hull[this.hull.length - 1].show();
+            // this.hull[this.hull.length - 1].show();
         }
     }
 
@@ -155,7 +163,7 @@ export class Track {
         const H = hull(points, this.difficulty);
         this.hull = [];
         for (const p of H) {
-            const point = new Point(this.p5, {pos: {x: p[0], y: p[1]}, color: this.p5.color('green'), r: 30});
+            const point = new Point(this.p5, {pos: {x: p[0], y: p[1]}, color: this.p5.color('green'), r: 10});
             this.hull.push(point);
         }
         return 0;
@@ -169,6 +177,9 @@ export class Track {
         while (i < maxIteration && fixedAngles > 0) {
             fixedAngles = this._fixHullAngles();
             i++;
+        }
+        if (fixedAngles > 0) {
+            console.log('angles issue');
         }
 
         return i;
@@ -218,5 +229,31 @@ export class Track {
         // Make sure the add the point we had removed at the beginning of the function
         this.hull.push(this.hull[0]);
         return anglesFixed;
+    }
+
+    checkForIntersection() {
+        for (let i = 0; i < this.hull.length; ++i) {
+            const nextIndex = (i + 1) % this.hull.length;
+            const next = this.hull[nextIndex];
+            const current = this.hull[i];
+
+            const A = current;
+            const B = next;
+
+            for (let j = 0; j < this.hull.length; ++j) {
+                if (j === i) {
+                    continue;
+                }
+                const C = this.hull[j];
+                const D = this.hull[(j + 1) % this.hull.length];
+
+                const intersection = collideLineLine(A, B, C, D);
+                if (intersection) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
