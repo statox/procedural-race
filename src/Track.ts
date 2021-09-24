@@ -1,4 +1,5 @@
 import P5 from 'p5';
+import {generateBezierCurve} from './bezier';
 import {Point} from './Point';
 import {angleToVertical, threePointsAngle, collideLineLine} from './utils';
 const hull = require('hull.js');
@@ -7,10 +8,12 @@ export class Track {
     p5: P5;
     points: Point[];
     hull: Point[];
+    interpolatedHull: Point[];
     numberOfInitialPoints: number;
     minDistanceBetweenInitialPoint: number;
     difficulty: number;
     minHullAngle: number;
+    pathWidth: number;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -19,6 +22,7 @@ export class Track {
         this.minDistanceBetweenInitialPoint = 10;
         this.minHullAngle = this.p5.radians(60);
         this.points = [];
+        this.pathWidth = 50;
 
         this.reset();
     }
@@ -34,6 +38,7 @@ export class Track {
             console.log('resetting because of loop');
             this.reset();
         }
+        this.calculateInterpolatedHull();
     }
 
     show() {
@@ -41,7 +46,7 @@ export class Track {
             this.points.forEach((p) => p.show());
         }
 
-        if (this.hull) {
+        if (this.hull && !this.interpolatedHull) {
             for (let i = 0; i < this.hull.length - 1; i++) {
                 // this.hull[i].show();
                 const A = this.hull[i].pos;
@@ -50,6 +55,17 @@ export class Track {
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
             // this.hull[this.hull.length - 1].show();
+        }
+
+        if (this.interpolatedHull) {
+            for (let i = 0; i < this.interpolatedHull.length - 1; i++) {
+                // this.interpolatedHull[i].show(true);
+                const A = this.interpolatedHull[i].pos;
+                const B = this.interpolatedHull[i + 1].pos;
+                this.p5.stroke('#222226');
+                this.p5.strokeWeight(this.pathWidth);
+                this.p5.line(A.x, A.y, B.x, B.y);
+            }
         }
     }
 
@@ -255,5 +271,16 @@ export class Track {
         }
 
         return false;
+    }
+
+    calculateInterpolatedHull() {
+        if (!this.hull) {
+            throw new Error("Can't calculate curve with no hull");
+        }
+
+        this.hull.pop(); // this.calculateHull() adds the first point as the last one, remove it for now
+        const points = this.hull.map((p) => p.pos);
+        const H = generateBezierCurve(points, 5);
+        this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('red'), r: 3}));
     }
 }

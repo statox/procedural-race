@@ -17,23 +17,31 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
+        resetTrack();
     };
 
     // The sketch draw method
     p5.draw = () => {
-        p5.background(0, 0, 0);
+        // p5.background(0, 0, 0);
+        p5.background('#085413');
         track.show();
         drawFPS();
     };
 
     p5.mousePressed = () => {
         // track.pushApart();
-        track.fixHullAngles();
+        // track.fixHullAngles();
+    };
+
+    const resetTrack = () => {
+        track.reset();
+        setTimeout(resetTrack, 1000);
     };
 
     const drawFPS = () => {
         const fpsText = `${getFrameRate()} fps`;
         p5.stroke('white');
+        p5.strokeWeight(1);
         p5.fill('white');
         p5.text(fpsText, 10, 10);
     };

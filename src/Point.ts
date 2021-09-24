@@ -27,26 +27,30 @@ export class Point {
         this.constrain();
     }
 
-    show() {
+    show(disableId?: boolean) {
         this.p5.stroke(this.color);
         this.p5.noFill();
         this.p5.circle(this.pos.x, this.pos.y, this.r);
 
-        this.p5.fill(250);
-        this.p5.noStroke();
-        const textW = this.p5.textWidth(this.id.toString());
-        const textH = this.p5.textSize();
-        this.p5.text(this.id, this.pos.x - textW / 2, this.pos.y + textH / 2);
+        if (!disableId) {
+            this.p5.fill(250);
+            this.p5.noStroke();
+            const textW = this.p5.textWidth(this.id.toString());
+            const textH = this.p5.textSize();
+            this.p5.text(this.id, this.pos.x - textW / 2, this.pos.y + textH / 2);
+        }
     }
 
     constrain() {
+        // const margin = this.r * 2;
+        const margin = 50;
         const w = this.p5.width;
         const h = this.p5.height;
 
-        const minX = this.r * 2;
-        const maxX = w - this.r * 2;
-        const minY = this.r * 2;
-        const maxY = h - this.r * 2;
+        const minX = margin;
+        const maxX = w - margin;
+        const minY = margin;
+        const maxY = h - margin;
 
         this.pos.x = this.p5.constrain(this.pos.x, minX, maxX);
         this.pos.y = this.p5.constrain(this.pos.y, minY, maxY);
