@@ -14,7 +14,7 @@ export class Car {
     sensorDistances: number[];
     sensorPoints: P5.Vector[];
 
-    constructor(p5: P5, params?: {pos?: P5.Vector | {x: number; y: number}}) {
+    constructor(p5: P5, params?: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector}) {
         this.p5 = p5;
         this.crashed = false;
         if (!params?.pos) {
@@ -24,12 +24,12 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = this.p5.createVector(2, 0);
+        this.speed = params.direction.copy().setMag(2);
 
         this.rays = [];
         this.crashed = false;
         for (let a = -45; a < 45; a += 10) {
-            this.rays.push(new Ray(this.p5, this.pos, this.p5.radians(a)));
+            this.rays.push(new Ray(this.p5, this.pos, this.p5.radians(a) + this.speed.heading()));
         }
     }
 

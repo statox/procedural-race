@@ -25,7 +25,7 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
-        car = new Car(p5, {pos: track.startingPosition.copy()});
+        car = new Car(p5, {pos: track.startingPosition.copy(), direction: track.startingDirection});
         screenshotter = new Screenshotter(p5);
 
         // startInfiniteGeneration();
@@ -90,7 +90,7 @@ const sketch = (p5: P5) => {
     const resetTrack = () => {
         trackImage = null;
         track.reset();
-        car = new Car(p5, {pos: track.startingPosition.copy()});
+        car = new Car(p5, {pos: track.startingPosition.copy(), direction: track.startingDirection});
     };
 
     const drawFPS = () => {

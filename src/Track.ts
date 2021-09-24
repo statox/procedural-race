@@ -19,6 +19,7 @@ export class Track {
     pathWidth: number;
     image: P5.Image;
     startingPosition: P5.Vector;
+    startingDirection: P5.Vector;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -310,6 +311,7 @@ export class Track {
         const H = generateBezierCurve(points, 5);
         this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('blue'), r: 3}));
         this.startingPosition = this.interpolatedHull[0].pos.copy();
+        this.startingDirection = this.startingPosition.copy().sub(this.interpolatedHull[1].pos);
     }
 
     calculateBorders() {
