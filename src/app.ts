@@ -27,7 +27,7 @@ const sketch = (p5: P5) => {
         car = new Car(p5, {pos: track.startingPosition.copy()});
         screenshotter = new Screenshotter(p5);
 
-        startInfiniteGeneration();
+        // startInfiniteGeneration();
     };
 
     // The sketch draw method
@@ -36,8 +36,9 @@ const sketch = (p5: P5) => {
         track.show();
         // The first time we draw the track we need to keep track of its image representation
         track.takeScreenshotIfNeeded();
-        // car.update();
+        car.update();
         car.checkIsOnTrack(track.image);
+        car.look([...track.rightBorder, ...track.leftBorder]);
         car.show();
         drawFPS();
 
@@ -73,7 +74,7 @@ const sketch = (p5: P5) => {
     const resetTrack = () => {
         trackImage = null;
         track.reset();
-        car.pos = track.startingPosition.copy();
+        car = new Car(p5, {pos: track.startingPosition.copy()});
     };
 
     const drawFPS = () => {
