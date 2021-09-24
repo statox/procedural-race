@@ -19,22 +19,33 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = this.p5.createVector(1, 0);
+        this.speed = this.p5.createVector(2, 0);
     }
 
     show() {
-        this.p5.noFill();
         if (this.crashed) {
             this.p5.stroke('red');
+            this.p5.fill('red');
         } else {
             this.p5.stroke('white');
+            this.p5.fill('white');
         }
         this.p5.strokeWeight(1);
-        this.p5.circle(this.pos.x, this.pos.y, 20);
+        this.p5.circle(this.pos.x, this.pos.y, 15);
     }
 
     update() {
-        // this.pos.add(this.speed);
+        // if (!this.crashed) {
+        this.pos.add(this.speed);
+        // }
+    }
+
+    turn(dir: 'LEFT' | 'RIGHT') {
+        if (dir === 'LEFT') {
+            this.speed.rotate(-this.p5.PI / 30);
+        } else {
+            this.speed.rotate(this.p5.PI / 30);
+        }
     }
 
     // Given the image representing the track and the color of the background

@@ -24,7 +24,7 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
-        car = new Car(p5, {pos: track.startingPosition.pos});
+        car = new Car(p5, {pos: track.startingPosition.copy()});
         screenshotter = new Screenshotter(p5);
     };
 
@@ -38,10 +38,18 @@ const sketch = (p5: P5) => {
         car.checkIsOnTrack(track.image);
         car.show();
         drawFPS();
+
+        driveCar();
     };
 
-    p5.mousePressed = () => {};
-
+    const driveCar = () => {
+        if (p5.keyIsDown(p5.LEFT_ARROW)) {
+            car.turn('LEFT');
+        }
+        if (p5.keyIsDown(p5.RIGHT_ARROW)) {
+            car.turn('RIGHT');
+        }
+    };
     p5.keyPressed = () => {
         if (p5.keyCode === p5.RETURN) {
             resetTrack();
@@ -51,7 +59,7 @@ const sketch = (p5: P5) => {
     const resetTrack = () => {
         trackImage = null;
         track.reset();
-        car.pos = track.startingPosition.pos.copy();
+        car.pos = track.startingPosition.copy();
     };
 
     const drawFPS = () => {
