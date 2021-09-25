@@ -21,6 +21,7 @@ export class Track {
     image: P5.Image;
     startingPosition: P5.Vector;
     startingDirection: P5.Vector;
+    distance: number;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -36,6 +37,7 @@ export class Track {
     reset() {
         this.image = null;
         this.pathWidth = this.p5.random(30, 130);
+        this.pathWidth = 100;
         this.numberOfInitialPoints = this.p5.random(4, this.maxNumberOfInitialPoints);
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
@@ -47,6 +49,7 @@ export class Track {
             this.reset();
         }
         this.calculateInterpolatedHull();
+        this.calculateDistance();
         this.calculateBorders();
     }
 
@@ -314,6 +317,18 @@ export class Track {
         this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('blue'), r: 3}));
         this.startingPosition = this.interpolatedHull[0].pos.copy();
         this.startingDirection = this.startingPosition.copy().sub(this.interpolatedHull[1].pos);
+    }
+    calculateDistance() {
+        if (!this.interpolatedHull) {
+            throw new Error("Can't calculate distance without interpolated hull");
+        }
+        this.distance = 0;
+        for (let i = 0; i < this.interpolatedHull.length - 1; i++) {
+            const a = this.interpolatedHull[i];
+            const b = this.interpolatedHull[i + 1];
+            const delta = a.pos.dist(b.pos);
+            this.distance += delta;
+        }
     }
 
     calculateBorders() {

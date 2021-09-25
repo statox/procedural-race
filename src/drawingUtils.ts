@@ -3,7 +3,7 @@ import {Car} from './Car';
 
 function showCarStats(p5: P5, car: Car, lastSpeed: number, maxSpeed: number) {
     const speed = car.speed.mag();
-    const speedText = `Speed: ${speed.toFixed(0)}`;
+    const speedText = `Speed: ${speed.toFixed(0)} - Lap ${car.lap}`;
     p5.stroke(255);
     p5.noFill();
     p5.strokeWeight(1);

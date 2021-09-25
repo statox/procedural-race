@@ -13,8 +13,9 @@ export class Car {
     rays: Ray[];
     sensorDistances: number[];
     sensorPoints: P5.Vector[];
-    age: number;
     trail: P5.Vector[];
+    traveledDistance: number;
+    lap: number;
 
     constructor(p5: P5, params?: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector}) {
         this.p5 = p5;
@@ -26,15 +27,16 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = params.direction.copy().setMag(2);
+        this.speed = params.direction.copy().setMag(4);
 
         this.rays = [];
         this.crashed = false;
         for (let a = -45; a < 45; a += 10) {
             this.rays.push(new Ray(this.p5, this.pos, this.p5.radians(a) + this.speed.heading()));
         }
-        this.age = 0;
         this.trail = [this.pos.copy()];
+        this.traveledDistance = 0;
+        this.lap = 0;
     }
 
     show() {
@@ -69,7 +71,6 @@ export class Car {
         this.pos.add(this.speed);
         this.pos.x = this.p5.constrain(this.pos.x, 0, this.p5.width);
         this.pos.y = this.p5.constrain(this.pos.y, 0, this.p5.height);
-        this.age++;
 
         if (!this.trail) {
             return;
@@ -77,7 +78,16 @@ export class Car {
         const lastTrail = this.trail[this.trail.length - 1];
         const distanceToLastTrail = this.pos.dist(lastTrail);
         if (distanceToLastTrail > 50) {
+            this.traveledDistance += distanceToLastTrail;
             this.trail.push(this.pos.copy());
+        }
+    }
+
+    countLap(trackDistance: number) {
+        const current = Math.floor(this.traveledDistance / trackDistance);
+        if (current > this.lap) {
+            this.lap = current;
+            this.accelerate();
         }
     }
 
@@ -96,7 +106,9 @@ export class Car {
     }
 
     accelerate() {
-        this.speed.mult(1.3);
+        // TODO: Fix the algorithm for progressive acceleration
+        const coef = 1 + 1 / ((this.lap * this.lap) % (5 * 5));
+        this.speed.mult(coef);
     }
 
     deccelerate() {

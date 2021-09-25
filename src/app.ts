@@ -44,14 +44,11 @@ const sketch = (p5: P5) => {
         car.checkIsOnTrack(track.image);
         car.look([track.rightBorder, track.leftBorder]);
         car.driveDecision();
+        car.countLap(track.distance);
         car.show();
         drawFPS();
 
         driveCar();
-        if (!lastTick || p5.millis() - 2 * 1000 > lastTick) {
-            lastTick = p5.millis();
-            car.accelerate();
-        }
         if (car.crashed) {
             if (!maxSpeed || car.speed.mag() > maxSpeed) {
                 maxSpeed = car.speed.mag();
