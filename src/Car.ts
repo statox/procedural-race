@@ -183,7 +183,7 @@ export class Car {
 
     turn(dir: 'LEFT' | 'RIGHT') {
         // let angle = this.p5.PI / 5;
-        let angle = 8;
+        let angle = 10;
         if (dir === 'LEFT') {
             angle = -angle;
         }
