@@ -37,7 +37,6 @@ export class Track {
     reset() {
         this.image = null;
         this.pathWidth = this.p5.random(30, 130);
-        this.pathWidth = 100;
         this.numberOfInitialPoints = this.p5.random(4, this.maxNumberOfInitialPoints);
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
