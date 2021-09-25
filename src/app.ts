@@ -3,6 +3,7 @@ import {Car} from './Car';
 import {showCarStats} from './drawingUtils';
 import {Point} from './Point';
 import {Screenshotter} from './Screenshotter';
+import {Stats} from './Stats';
 import './styles.scss';
 import {Track} from './Track';
 const config = require('./config.json');
@@ -17,9 +18,7 @@ const sketch = (p5: P5) => {
     let cars;
     let screenshotter;
     let trackImage;
-    let lastTick;
-    let lastSpeed;
-    let maxSpeed;
+    let stats;
 
     // The sketch setup method
     p5.setup = () => {
@@ -27,6 +26,7 @@ const sketch = (p5: P5) => {
         const canvas = p5.createCanvas(W, H);
         canvas.parent('app');
 
+        stats = new Stats(p5);
         track = new Track(p5);
         screenshotter = new Screenshotter(p5);
         resetTrack();
@@ -50,22 +50,19 @@ const sketch = (p5: P5) => {
             car.countLap(track.distance);
             car.show();
 
-            if (car.crashed) {
-                if (!maxSpeed || car.speed.mag() > maxSpeed) {
-                    maxSpeed = car.speed.mag();
-                }
-                lastSpeed = car.speed.mag();
-            } else {
+            if (!car.crashed) {
                 allCarCrashed = false;
             }
         }
+
+        stats.update(cars);
+        stats.show();
+
         drawFPS();
 
         if (allCarCrashed) {
             resetTrack();
         }
-
-        // showCarStats(p5, cars[0], lastSpeed, maxSpeed);
     };
 
     p5.mousePressed = () => {
