@@ -80,6 +80,9 @@ export class Car {
         if (distanceToLastTrail > 50) {
             this.traveledDistance += distanceToLastTrail;
             this.trail.push(this.pos.copy());
+            if (this.trail.length > 200) {
+                this.trail.shift();
+            }
         }
     }
 
