@@ -375,6 +375,11 @@ export class Track {
             i++;
         }
 
+        // Bug fix to make sure we didn't remove the last point which
+        // would create a hole in the borders
+        this.leftBorder.push(this.leftBorder[0]);
+        this.rightBorder.push(this.rightBorder[0]);
+
         return i;
     }
 
