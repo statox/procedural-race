@@ -172,7 +172,7 @@ export class Car {
         if (percentage < -1 || percentage > 1) {
             throw new Error(`Out of range percentage ${percentage}`);
         }
-        const maxAngle = this.p5.radians(20);
+        const maxAngle = this.p5.radians(40);
         const angle = this.p5.map(percentage, -1, 1, -maxAngle, maxAngle);
 
         this.speed.rotate(angle);
