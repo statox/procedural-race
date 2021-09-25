@@ -13,6 +13,8 @@ export class Car {
     rays: Ray[];
     sensorDistances: number[];
     sensorPoints: P5.Vector[];
+    age: number;
+    trail: P5.Vector[];
 
     constructor(p5: P5, params?: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector}) {
         this.p5 = p5;
@@ -31,6 +33,8 @@ export class Car {
         for (let a = -45; a < 45; a += 10) {
             this.rays.push(new Ray(this.p5, this.pos, this.p5.radians(a) + this.speed.heading()));
         }
+        this.age = 0;
+        this.trail = [this.pos.copy()];
     }
 
     show() {
@@ -48,12 +52,33 @@ export class Car {
         for (const sensorPoint of this.sensorPoints) {
             this.p5.line(this.pos.x, this.pos.y, sensorPoint.x, sensorPoint.y);
         }
+
+        for (let i = 0; i < this.trail.length - 1; i++) {
+            const p = this.trail[i];
+            const q = this.trail[i + 1];
+            this.p5.noStroke();
+            const alpha = this.p5.map(i, 0, this.trail.length, 50, 250);
+            this.p5.fill(150, alpha);
+            this.p5.circle(p.x, p.y, 3);
+            this.p5.stroke(150, alpha);
+            this.p5.line(p.x, p.y, q.x, q.y);
+        }
     }
 
     update() {
         this.pos.add(this.speed);
         this.pos.x = this.p5.constrain(this.pos.x, 0, this.p5.width);
         this.pos.y = this.p5.constrain(this.pos.y, 0, this.p5.height);
+        this.age++;
+
+        if (!this.trail) {
+            return;
+        }
+        const lastTrail = this.trail[this.trail.length - 1];
+        const distanceToLastTrail = this.pos.dist(lastTrail);
+        if (distanceToLastTrail > 50) {
+            this.trail.push(this.pos.copy());
+        }
     }
 
     driveDecision() {
