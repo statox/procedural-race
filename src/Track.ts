@@ -29,14 +29,13 @@ export class Track {
         this.minDistanceBetweenInitialPoint = 10;
         this.minHullAngle = this.p5.radians(95);
         this.points = [];
-        this.pathWidth = this.p5.random(50, 120);
 
         this.reset();
     }
 
     reset() {
         this.image = null;
-        this.pathWidth = this.p5.random(50, 120);
+        this.pathWidth = this.p5.random(30, 130);
         this.numberOfInitialPoints = this.p5.random(4, this.maxNumberOfInitialPoints);
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
