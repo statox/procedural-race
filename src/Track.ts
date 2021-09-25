@@ -12,6 +12,7 @@ export class Track {
     interpolatedHull: Point[];
     rightBorder: Point[];
     leftBorder: Point[];
+    maxNumberOfInitialPoints: number;
     numberOfInitialPoints: number;
     minDistanceBetweenInitialPoint: number;
     difficulty: number;
@@ -24,17 +25,19 @@ export class Track {
     constructor(p5: P5) {
         this.p5 = p5;
         this.difficulty = 500; // 0 very hard (concave hull) - Infinity very easy (convex hull)
-        this.numberOfInitialPoints = 6;
+        this.maxNumberOfInitialPoints = 12;
         this.minDistanceBetweenInitialPoint = 10;
         this.minHullAngle = this.p5.radians(95);
         this.points = [];
-        this.pathWidth = 100;
+        this.pathWidth = this.p5.random(50, 120);
 
         this.reset();
     }
 
     reset() {
         this.image = null;
+        this.pathWidth = this.p5.random(50, 120);
+        this.numberOfInitialPoints = this.p5.random(4, this.maxNumberOfInitialPoints);
         this.generateRandomPoints(this.numberOfInitialPoints);
         // this.generateSquare();
         // this.generate5Points();
