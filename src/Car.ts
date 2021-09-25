@@ -5,6 +5,8 @@ const config = require('./config.json');
 
 const offTrackColor = config.offTrackColor;
 
+export type DriveMode = 'BASIC' | 'PERCENTAGE';
+
 export class Car {
     p5: P5;
     pos: P5.Vector;
@@ -16,8 +18,10 @@ export class Car {
     trail: P5.Vector[];
     traveledDistance: number;
     lap: number;
+    color: P5.Color;
+    driveMode: DriveMode;
 
-    constructor(p5: P5, params?: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector}) {
+    constructor(p5: P5, params: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector; driveMode: DriveMode}) {
         this.p5 = p5;
         this.crashed = false;
         if (!params?.pos) {
@@ -37,20 +41,31 @@ export class Car {
         this.trail = [this.pos.copy()];
         this.traveledDistance = 0;
         this.lap = 0;
+
+        this.driveMode = params.driveMode;
+        this.color = this.p5.color('white');
+        if (this.driveMode === 'BASIC') {
+            this.color = this.p5.color('#bfb91e');
+        }
+        if (this.driveMode === 'PERCENTAGE') {
+            this.color = this.p5.color('#1ebfac');
+        }
     }
 
     show() {
+        let color = this.color;
         if (this.crashed) {
-            this.p5.stroke('red');
-            this.p5.fill('red');
-        } else {
-            this.p5.stroke('white');
-            this.p5.fill('white');
+            color = this.p5.color('red');
         }
+        const secondaryColor = this.p5.color(color.toString());
+        secondaryColor.setAlpha(50);
+
+        this.p5.stroke(color);
+        this.p5.fill(color);
         this.p5.strokeWeight(1);
         this.p5.circle(this.pos.x, this.pos.y, 15);
 
-        this.p5.stroke(255, 100);
+        this.p5.stroke(secondaryColor);
         for (const sensorPoint of this.sensorPoints) {
             this.p5.line(this.pos.x, this.pos.y, sensorPoint.x, sensorPoint.y);
         }
@@ -60,14 +75,17 @@ export class Car {
             const q = this.trail[i + 1];
             this.p5.noStroke();
             const alpha = this.p5.map(i, 0, this.trail.length, 50, 250);
-            this.p5.fill(150, alpha);
+            this.p5.fill(secondaryColor);
             this.p5.circle(p.x, p.y, 3);
-            this.p5.stroke(150, alpha);
+            this.p5.stroke(secondaryColor);
             this.p5.line(p.x, p.y, q.x, q.y);
         }
     }
 
     update() {
+        if (this.crashed) {
+            return;
+        }
         this.pos.add(this.speed);
         this.pos.x = this.p5.constrain(this.pos.x, 0, this.p5.width);
         this.pos.y = this.p5.constrain(this.pos.y, 0, this.p5.height);
@@ -95,6 +113,35 @@ export class Car {
     }
 
     driveDecision() {
+        if (this.driveMode === 'BASIC') {
+            this.driveDecisionBasic();
+            return;
+        }
+        if (this.driveMode === 'PERCENTAGE') {
+            this.driveDecisionPercentage();
+            return;
+        }
+    }
+
+    driveDecisionPercentage() {
+        let right = 0;
+        let left = 0;
+        for (let i = 0; i < this.sensorDistances.length / 2; i++) {
+            left += this.sensorDistances[i];
+            right += this.sensorDistances[this.sensorDistances.length - 1 - i];
+        }
+
+        const total = right + left;
+        const rightPercentage = right / total;
+        const leftPercentage = left / total;
+        const percentage = leftPercentage - rightPercentage;
+        if (percentage > -1 && percentage < 1) {
+            this.turnByPercentage(rightPercentage);
+            this.turnByPercentage(-leftPercentage);
+        }
+    }
+
+    driveDecisionBasic() {
         let right = 0;
         let left = 0;
         for (let i = 0; i < this.sensorDistances.length / 2; i++) {
@@ -112,10 +159,26 @@ export class Car {
         // TODO: Fix the algorithm for progressive acceleration
         const coef = 1 + 1 / ((this.lap * this.lap) % (5 * 5));
         this.speed.mult(coef);
+        // this.speed.mult(1.1);
     }
 
     deccelerate() {
         this.speed.mult(0.9);
+    }
+
+    // Percentage: [-1, 1]
+    // -1: Full left, 1: Full right, 0: no turn
+    turnByPercentage(percentage: number) {
+        if (percentage < -1 || percentage > 1) {
+            throw new Error(`Out of range percentage ${percentage}`);
+        }
+        const maxAngle = this.p5.radians(20);
+        const angle = this.p5.map(percentage, -1, 1, -maxAngle, maxAngle);
+
+        this.speed.rotate(angle);
+        for (const ray of this.rays) {
+            ray.dir.rotate(angle);
+        }
     }
 
     turn(dir: 'LEFT' | 'RIGHT') {

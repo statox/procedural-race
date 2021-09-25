@@ -14,7 +14,7 @@ const sketch = (p5: P5) => {
     let frameRateHistory = new Array(10).fill(0);
 
     let track;
-    let car;
+    let cars;
     let screenshotter;
     let trackImage;
     let lastTick;
@@ -28,8 +28,8 @@ const sketch = (p5: P5) => {
         canvas.parent('app');
 
         track = new Track(p5);
-        car = new Car(p5, {pos: track.startingPosition.copy(), direction: track.startingDirection});
         screenshotter = new Screenshotter(p5);
+        resetTrack();
 
         // startInfiniteGeneration();
     };
@@ -40,31 +40,42 @@ const sketch = (p5: P5) => {
         track.show();
         // The first time we draw the track we need to keep track of its image representation
         track.takeScreenshotIfNeeded();
-        car.update();
-        car.checkIsOnTrack(track.image);
-        car.look([track.rightBorder, track.leftBorder]);
-        car.driveDecision();
-        car.countLap(track.distance);
-        car.show();
+
+        let allCarCrashed = true;
+        for (const car of cars) {
+            car.update();
+            car.checkIsOnTrack(track.image);
+            car.look([track.rightBorder, track.leftBorder]);
+            car.driveDecision();
+            car.countLap(track.distance);
+            car.show();
+
+            if (car.crashed) {
+                if (!maxSpeed || car.speed.mag() > maxSpeed) {
+                    maxSpeed = car.speed.mag();
+                }
+                lastSpeed = car.speed.mag();
+            } else {
+                allCarCrashed = false;
+            }
+        }
         drawFPS();
 
-        driveCar();
-        if (car.crashed) {
-            if (!maxSpeed || car.speed.mag() > maxSpeed) {
-                maxSpeed = car.speed.mag();
-            }
-            lastSpeed = car.speed.mag();
+        if (allCarCrashed) {
             resetTrack();
         }
 
-        showCarStats(p5, car, lastSpeed, maxSpeed);
+        // showCarStats(p5, cars[0], lastSpeed, maxSpeed);
     };
 
     p5.mousePressed = () => {
-        track.removeBorderIntersection();
+        for (const car of cars) {
+            car.pos.x = p5.mouseX;
+            car.pos.y = p5.mouseY;
+        }
     };
 
-    const driveCar = () => {
+    const driveCar = (car: Car) => {
         if (p5.keyIsDown(p5.LEFT_ARROW)) {
             car.turn('LEFT');
         }
@@ -78,6 +89,7 @@ const sketch = (p5: P5) => {
             car.deccelerate();
         }
     };
+
     p5.keyPressed = () => {
         if (p5.keyCode === p5.RETURN) {
             resetTrack();
@@ -95,7 +107,18 @@ const sketch = (p5: P5) => {
     const resetTrack = () => {
         trackImage = null;
         track.reset();
-        car = new Car(p5, {pos: track.startingPosition.copy(), direction: track.startingDirection});
+        cars = [
+            new Car(p5, {
+                pos: track.startingPosition.copy(),
+                direction: track.startingDirection,
+                driveMode: 'BASIC'
+            }),
+            new Car(p5, {
+                pos: track.startingPosition.copy(),
+                direction: track.startingDirection,
+                driveMode: 'PERCENTAGE'
+            })
+        ];
     };
 
     const drawFPS = () => {
