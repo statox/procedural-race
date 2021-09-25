@@ -19,6 +19,7 @@ export class Track {
     minHullAngle: number;
     pathWidth: number;
     image: P5.Image;
+    startingVertexIndex: number;
     startingPosition: P5.Vector;
     startingDirection: P5.Vector;
     distance: number;
@@ -94,6 +95,27 @@ export class Track {
                 this.p5.stroke('#222226');
                 this.p5.strokeWeight(this.pathWidth);
                 this.p5.line(A.x, A.y, B.x, B.y);
+            }
+
+            if (this.startingVertexIndex) {
+                const A = this.interpolatedHull[this.startingVertexIndex];
+                const B = this.interpolatedHull[this.startingVertexIndex + (1 % this.interpolatedHull.length)];
+                const l = B.pos.copy().sub(A.pos);
+
+                const left = l
+                    .copy()
+                    .setMag(this.pathWidth / 2)
+                    .rotate(this.p5.PI / 2)
+                    .add(A.pos);
+                const right = l
+                    .copy()
+                    .setMag(this.pathWidth / 2)
+                    .rotate(-this.p5.PI / 2)
+                    .add(A.pos);
+
+                this.p5.stroke('green');
+                this.p5.strokeWeight(3);
+                this.p5.line(left.x, left.y, right.x, right.y);
             }
         }
     }
@@ -314,8 +336,12 @@ export class Track {
         const points = this.hull.map((p) => p.pos);
         const H = generateBezierCurve(points, 5);
         this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('blue'), r: 3}));
-        this.startingPosition = this.interpolatedHull[0].pos.copy();
-        this.startingDirection = this.startingPosition.copy().sub(this.interpolatedHull[1].pos);
+        this.startingVertexIndex = Math.floor(this.p5.random(1, this.interpolatedHull.length - 2));
+        this.startingPosition = this.interpolatedHull[this.startingVertexIndex].pos.copy();
+        const randomDirection = Math.random() > 0.5 ? -1 : 1;
+        this.startingDirection = this.startingPosition
+            .copy()
+            .sub(this.interpolatedHull[this.startingVertexIndex + randomDirection].pos);
     }
     calculateDistance() {
         if (!this.interpolatedHull) {
