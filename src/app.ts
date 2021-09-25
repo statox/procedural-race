@@ -1,5 +1,6 @@
 import P5 from 'p5';
 import {Car} from './Car';
+import {showCarStats} from './drawingUtils';
 import {Point} from './Point';
 import {Screenshotter} from './Screenshotter';
 import './styles.scss';
@@ -17,6 +18,8 @@ const sketch = (p5: P5) => {
     let screenshotter;
     let trackImage;
     let lastTick;
+    let lastSpeed;
+    let maxSpeed;
 
     // The sketch setup method
     p5.setup = () => {
@@ -50,9 +53,14 @@ const sketch = (p5: P5) => {
             car.accelerate();
         }
         if (car.crashed) {
-            console.log('Crashed at', Math.floor(car.speed.mag()));
+            if (!maxSpeed || car.speed.mag() > maxSpeed) {
+                maxSpeed = car.speed.mag();
+            }
+            lastSpeed = car.speed.mag();
             resetTrack();
         }
+
+        showCarStats(p5, car, lastSpeed, maxSpeed);
     };
 
     p5.mousePressed = () => {
