@@ -3,5 +3,6 @@
         "height": 600,
         "width": 1000
     },
-    "offTrackColor": [8, 84, 19]
+    "offTrackColor": [8, 84, 19],
+    "initialCarSpeed": 4
 }

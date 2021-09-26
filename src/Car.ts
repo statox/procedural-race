@@ -4,6 +4,7 @@ import {Ray} from './Ray';
 const config = require('./config.json');
 
 const offTrackColor = config.offTrackColor;
+const initialCarSpeed = config.initialCarSpeed;
 
 export type DriveMode = 'BASIC' | 'PERCENTAGE';
 
@@ -31,7 +32,7 @@ export class Car {
         } else {
             this.pos = this.p5.createVector(params.pos.x, params.pos.y);
         }
-        this.speed = params.direction.copy().setMag(4);
+        this.speed = params.direction.copy().setMag(initialCarSpeed);
 
         this.rays = [];
         this.crashed = false;
