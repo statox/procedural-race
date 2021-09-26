@@ -2,6 +2,7 @@ import P5 from 'p5';
 import {Car} from './Car';
 import {showCarStats} from './drawingUtils';
 import {Point} from './Point';
+import {Pool} from './Pool';
 import {Stats} from './Stats';
 import './styles.scss';
 import {Track} from './Track';
@@ -14,7 +15,7 @@ const sketch = (p5: P5) => {
     let frameRateHistory = new Array(10).fill(0);
 
     let track;
-    let cars;
+    let pool;
     let stats;
 
     // The sketch setup method
@@ -25,6 +26,7 @@ const sketch = (p5: P5) => {
 
         stats = new Stats(p5);
         track = new Track(p5);
+        pool = new Pool(p5, track);
         resetTrack();
 
         // startInfiniteGeneration();
@@ -37,30 +39,21 @@ const sketch = (p5: P5) => {
         // The first time we draw the track we need to keep track of its image representation
         track.takeScreenshotIfNeeded();
 
-        let allCarCrashed = true;
-        for (const car of cars) {
-            car.update();
-            car.updateTrackInfo(track);
-            car.driveDecision();
-            car.show();
+        pool.update(track);
+        pool.show();
 
-            if (!car.crashed) {
-                allCarCrashed = false;
-            }
-        }
-
-        stats.update(cars);
+        stats.update(pool.cars);
         stats.show();
 
         drawFPS();
 
-        if (allCarCrashed) {
+        if (pool.allCarCrashed) {
             resetTrack();
         }
     };
 
     p5.mousePressed = () => {
-        for (const car of cars) {
+        for (const car of pool.cars) {
             car.pos.x = p5.mouseX;
             car.pos.y = p5.mouseY;
         }
@@ -97,19 +90,7 @@ const sketch = (p5: P5) => {
 
     const resetTrack = () => {
         track.reset();
-
-        cars = [
-            new Car(p5, {
-                pos: track.startingPosition.copy(),
-                direction: track.startingDirection,
-                driveMode: 'BASIC'
-            }),
-            new Car(p5, {
-                pos: track.startingPosition.copy(),
-                direction: track.startingDirection,
-                driveMode: 'PERCENTAGE'
-            })
-        ];
+        pool.reset(track);
     };
 
     const drawFPS = () => {
