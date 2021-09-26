@@ -15,20 +15,25 @@ export class Pool {
     reset(track: Track) {
         this.allCarCrashed = false;
         this.cars = [];
-        this.cars.push(
-            new Car(this.p5, {
-                pos: track.startingPosition.copy(),
+        for (let i = 0; i < 100; i++) {
+            const driveMode = i % 2 ? 'BASIC' : 'PERCENTAGE';
+            const startingPosition = track.interpolatedHull[0].pos.copy();
+            // const startingPosition = track.interpolatedHull[(i * 10) % track.interpolatedHull.length].pos.copy();
+
+            const randomOffset = this.p5.createVector();
+            randomOffset.x = this.p5.random(-1, 1);
+            randomOffset.y = this.p5.random(-1, 1);
+            const randomOffsetMag = this.p5.random(1, track.pathWidth / 2);
+            randomOffset.setMag(randomOffsetMag);
+            startingPosition.add(randomOffset);
+
+            const c = new Car(this.p5, {
+                pos: startingPosition,
                 direction: track.startingDirection,
-                driveMode: 'BASIC'
-            })
-        );
-        this.cars.push(
-            new Car(this.p5, {
-                pos: track.startingPosition.copy(),
-                direction: track.startingDirection,
-                driveMode: 'PERCENTAGE'
-            })
-        );
+                driveMode: driveMode
+            });
+            this.cars.push(c);
+        }
     }
 
     show() {
