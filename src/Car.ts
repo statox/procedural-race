@@ -233,6 +233,11 @@ export class Car {
     // update this.crashed testing if the color in the image at the current position
     // is the same as the background color
     checkIsOnTrack(trackImage: P5.Image) {
+        // Hacky hack
+        if (this.pos.x < 0 || this.pos.y < 0 || this.pos.x >= trackImage.width || this.pos.y >= trackImage.height) {
+            this.crashed = true;
+            return true;
+        }
         const currentColor = trackImage.get(this.pos.x, this.pos.y);
         const colorMatch =
             currentColor[0] === offTrackColor[0] &&
