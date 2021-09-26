@@ -34,7 +34,25 @@ export class Stats {
     }
 
     update(cars: Car[]) {
-        for (const car of cars) {
+        let bestScores = {};
+        for (const type of Object.keys(this.data)) {
+            bestScores[type] = {score: -Infinity, index: -1};
+        }
+        for (let i = 0; i < cars.length; i++) {
+            const car = cars[i];
+            const {score, driveMode} = car;
+            if (car.score > bestScores[driveMode].score) {
+                bestScores[driveMode].score = car.score;
+                bestScores[driveMode].index = i;
+            }
+        }
+
+        for (const driveMode of Object.keys(this.data)) {
+            const score = bestScores[driveMode];
+            if (score.index === -1) {
+                continue;
+            }
+            const car = cars[score.index];
             const type = car.driveMode;
             const typeData = this.data[type];
 
@@ -58,6 +76,9 @@ export class Stats {
         this.p5.noStroke();
         for (const type of Object.keys(this.data)) {
             const data = this.data[type];
+            if (!data.score) {
+                continue;
+            }
             const color = this.p5.color(data.color);
             const lap = data.lap;
             const speed = data.currentSpeed.toFixed(0);
