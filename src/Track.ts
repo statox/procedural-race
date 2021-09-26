@@ -23,6 +23,7 @@ export class Track {
     startingPosition: P5.Vector;
     startingDirection: P5.Vector;
     distance: number;
+    debugBorders: boolean;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -31,6 +32,7 @@ export class Track {
         this.minDistanceBetweenInitialPoint = 10;
         this.minHullAngle = this.p5.radians(95);
         this.points = [];
+        this.debugBorders = false;
 
         this.reset();
     }
@@ -46,11 +48,15 @@ export class Track {
         this.calculateHull();
         this.fixHullAngles();
         if (this.checkForIntersection()) {
-            this.reset();
+            return this.reset();
         }
         this.calculateInterpolatedHull();
         this.calculateDistance();
         this.calculateBorders();
+
+        if (this.checkForBordersIntersection()) {
+            return this.reset();
+        }
     }
 
     show() {
@@ -116,6 +122,27 @@ export class Track {
                 this.p5.stroke('green');
                 this.p5.strokeWeight(3);
                 this.p5.line(left.x, left.y, right.x, right.y);
+            }
+        }
+
+        if (this.debugBorders) {
+            if (this.rightBorder) {
+                for (let i = 0; i <= this.rightBorder.length - 1; i++) {
+                    const A = this.rightBorder[i].pos;
+                    const B = this.rightBorder[(i + 1) % this.rightBorder.length].pos;
+                    this.p5.stroke(i % 2 ? 'red' : 'white');
+                    this.p5.strokeWeight(3);
+                    this.p5.line(A.x, A.y, B.x, B.y);
+                }
+            }
+            if (this.leftBorder) {
+                for (let i = 0; i <= this.leftBorder.length - 1; i++) {
+                    const A = this.leftBorder[i].pos;
+                    const B = this.leftBorder[(i + 1) % this.leftBorder.length].pos;
+                    this.p5.stroke(i % 2 ? 'red' : 'white');
+                    this.p5.strokeWeight(3);
+                    this.p5.line(A.x, A.y, B.x, B.y);
+                }
             }
         }
     }
@@ -301,6 +328,7 @@ export class Track {
         return anglesFixed;
     }
 
+    // Check if the hull intersects itself
     checkForIntersection() {
         for (let i = 0; i < this.hull.length; ++i) {
             const nextIndex = (i + 1) % this.hull.length;
@@ -316,6 +344,37 @@ export class Track {
                 }
                 const C = this.hull[j];
                 const D = this.hull[(j + 1) % this.hull.length];
+
+                const intersection = collideLineLine(A, B, C, D);
+                if (intersection) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // after fixing a hull and generating the borders check
+    // that the left and right borders don't intersect
+    checkForBordersIntersection() {
+        if (!this.rightBorder || !this.leftBorder) {
+            throw new Error("Can't check for border intersection without borders");
+        }
+        for (let i = 0; i < this.leftBorder.length; ++i) {
+            const nextIndex = (i + 1) % this.leftBorder.length;
+            const next = this.leftBorder[nextIndex];
+            const current = this.leftBorder[i];
+
+            const A = current;
+            const B = next;
+
+            for (let j = 0; j < this.rightBorder.length; ++j) {
+                if (j === i) {
+                    continue;
+                }
+                const C = this.rightBorder[j];
+                const D = this.rightBorder[(j + 1) % this.rightBorder.length];
 
                 const intersection = collideLineLine(A, B, C, D);
                 if (intersection) {
