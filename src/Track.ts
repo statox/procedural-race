@@ -19,11 +19,11 @@ export class Track {
     minHullAngle: number;
     pathWidth: number;
     image: P5.Image;
-    startingVertexIndex: number;
     startingPosition: P5.Vector;
     startingDirection: P5.Vector;
     distance: number;
     debugBorders: boolean;
+    debugInterpolatedHull: boolean;
 
     constructor(p5: P5) {
         this.p5 = p5;
@@ -33,6 +33,7 @@ export class Track {
         this.minHullAngle = this.p5.radians(95);
         this.points = [];
         this.debugBorders = false;
+        this.debugInterpolatedHull = false;
 
         this.reset();
     }
@@ -103,25 +104,33 @@ export class Track {
                 this.p5.line(A.x, A.y, B.x, B.y);
             }
 
-            if (this.startingVertexIndex) {
-                const A = this.interpolatedHull[this.startingVertexIndex];
-                const B = this.interpolatedHull[this.startingVertexIndex + (1 % this.interpolatedHull.length)];
-                const l = B.pos.copy().sub(A.pos);
+            const A = this.interpolatedHull[0];
+            const B = this.interpolatedHull[1];
+            const l = B.pos.copy().sub(A.pos);
 
-                const left = l
-                    .copy()
-                    .setMag(this.pathWidth / 2)
-                    .rotate(this.p5.PI / 2)
-                    .add(A.pos);
-                const right = l
-                    .copy()
-                    .setMag(this.pathWidth / 2)
-                    .rotate(-this.p5.PI / 2)
-                    .add(A.pos);
+            const left = l
+                .copy()
+                .setMag(this.pathWidth / 2)
+                .rotate(this.p5.PI / 2)
+                .add(A.pos);
+            const right = l
+                .copy()
+                .setMag(this.pathWidth / 2)
+                .rotate(-this.p5.PI / 2)
+                .add(A.pos);
 
-                this.p5.stroke('green');
-                this.p5.strokeWeight(3);
-                this.p5.line(left.x, left.y, right.x, right.y);
+            this.p5.stroke('green');
+            this.p5.strokeWeight(3);
+            this.p5.line(left.x, left.y, right.x, right.y);
+
+            if (this.debugInterpolatedHull) {
+                for (let i = 0; i < this.interpolatedHull.length; i++) {
+                    const A = this.interpolatedHull[i].pos;
+                    const r = this.p5.map(i, 0, this.interpolatedHull.length, 1, 10);
+                    this.p5.fill('red');
+                    this.p5.noStroke();
+                    this.p5.circle(A.x, A.y, r);
+                }
             }
         }
 
@@ -395,12 +404,29 @@ export class Track {
         const points = this.hull.map((p) => p.pos);
         const H = generateBezierCurve(points, 5);
         this.interpolatedHull = H.map((pos) => new Point(this.p5, {pos, color: this.p5.color('blue'), r: 3}));
-        this.startingVertexIndex = Math.floor(this.p5.random(1, this.interpolatedHull.length - 2));
-        this.startingPosition = this.interpolatedHull[this.startingVertexIndex].pos.copy();
+        const startingVertexIndex = Math.floor(this.p5.random(1, this.interpolatedHull.length - 2));
+        this.startingPosition = this.interpolatedHull[startingVertexIndex].pos.copy();
         const randomDirection = Math.random() > 0.5 ? -1 : 1;
         this.startingDirection = this.startingPosition
             .copy()
-            .sub(this.interpolatedHull[this.startingVertexIndex + randomDirection].pos);
+            .sub(this.interpolatedHull[startingVertexIndex + randomDirection].pos);
+
+        // Make sure the first point in the interpolatedHull is the one where the cars will start
+        const sortedHull = [];
+        let start = 0;
+        let end = this.interpolatedHull.length - 1;
+        let inc = 1;
+        if (randomDirection > 0) {
+            start = this.interpolatedHull.length - 1;
+            end = 0;
+            inc = -1;
+        }
+
+        for (let i = start; i !== end; i += inc) {
+            const index = (i + startingVertexIndex) % this.interpolatedHull.length;
+            sortedHull.push(this.interpolatedHull[index]);
+        }
+        this.interpolatedHull = sortedHull;
     }
     calculateDistance() {
         if (!this.interpolatedHull) {
