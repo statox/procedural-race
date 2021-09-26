@@ -89,7 +89,10 @@ const sketch = (p5: P5) => {
     };
 
     const resetTrack = () => {
-        track.reset();
+        if (pool.generations === 0) {
+            track.reset();
+            pool = new Pool(p5, track);
+        }
         pool.reset(track);
     };
 

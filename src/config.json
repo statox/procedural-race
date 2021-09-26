@@ -4,6 +4,6 @@
         "width": 1000
     },
     "offTrackColor": [8, 84, 19],
-    "initialCarSpeed": 4,
+    "initialCarSpeed": 6,
     "mutationRate": 0.2
 }

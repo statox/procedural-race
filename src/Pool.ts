@@ -9,15 +9,18 @@ export class Pool {
     allCarCrashed: boolean;
     size: number;
     dnas: DNA[];
+    generations: number;
 
     constructor(p5: P5, track: Track) {
         this.p5 = p5;
         this.size = 100;
+        this.generations = 5;
         this.generateInitialDNAs();
         this.reset(track);
     }
 
     reset(track: Track) {
+        this.generations--;
         if (!this.dnas) {
             throw new Error("Can't reset pool without generated dnas");
         }
