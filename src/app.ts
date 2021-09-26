@@ -41,10 +41,8 @@ const sketch = (p5: P5) => {
         let allCarCrashed = true;
         for (const car of cars) {
             car.update();
-            car.checkIsOnTrack(track.image);
-            car.look([track.rightBorder, track.leftBorder]);
+            car.updateTrackInfo(track);
             car.driveDecision();
-            car.countLap(track.distance);
             car.show();
 
             if (!car.crashed) {

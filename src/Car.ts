@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import {Point} from './Point';
 import {Ray} from './Ray';
+import {Track} from './Track';
 const config = require('./config.json');
 
 const offTrackColor = config.offTrackColor;
@@ -21,6 +22,7 @@ export class Car {
     lap: number;
     color: P5.Color;
     driveMode: DriveMode;
+    score: number;
 
     constructor(p5: P5, params: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector; driveMode: DriveMode}) {
         this.p5 = p5;
@@ -51,6 +53,7 @@ export class Car {
         if (this.driveMode === 'PERCENTAGE') {
             this.color = this.p5.color('#1ebfac');
         }
+        this.score = 0;
     }
 
     show() {
@@ -105,12 +108,24 @@ export class Car {
         }
     }
 
+    updateTrackInfo(track) {
+        this.countLap(track.distance);
+        this.checkIsOnTrack(track.image);
+        this.scoreCurrentPosition(track);
+        this.look([track.rightBorder, track.leftBorder]);
+    }
+
     countLap(trackDistance: number) {
         const current = Math.floor(this.traveledDistance / trackDistance);
         if (current > this.lap) {
             this.lap = current;
             this.accelerate();
         }
+    }
+
+    scoreCurrentPosition(track: Track) {
+        const positionScore = track.scorePosition(this.pos);
+        this.score += positionScore;
     }
 
     driveDecision() {

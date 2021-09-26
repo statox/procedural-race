@@ -8,6 +8,7 @@ type Data = {
     maxSpeed: number;
     lastSpeed: number;
     color: string;
+    score: number;
 };
 
 export class Stats {
@@ -22,7 +23,8 @@ export class Stats {
             currentSpeed: 0,
             maxSpeed: 0,
             lastSpeed: 0,
-            color: 'white'
+            color: 'white',
+            score: 0
         };
         this.data = {
             BASIC: {...basicDataObject},
@@ -45,6 +47,7 @@ export class Stats {
             typeData.currentSpeed = car.speed.mag();
             typeData.lap = car.lap;
             typeData.color = car.color.toString();
+            typeData.score = car.score;
         }
     }
 
@@ -57,10 +60,11 @@ export class Stats {
             const color = this.p5.color(data.color);
             const lap = data.lap;
             const speed = data.currentSpeed.toFixed(0);
+            const score = data.score.toFixed(0);
             const dist = data.currentDistance.toFixed(0);
             const lastSpeed = data.lastSpeed.toFixed(0);
             const maxSpeed = data.maxSpeed.toFixed(0);
-            const line = `Lap: ${lap} - Speed: ${speed} - Dist: ${dist} - Max speed: ${maxSpeed} - Last turn speed ${lastSpeed}`;
+            const line = `Lap: ${lap} - Speed: ${speed} - Score: ${score} - Dist: ${dist} - Max speed: ${maxSpeed} - Last turn speed ${lastSpeed}`;
             this.p5.fill(color);
             this.p5.text(type, 10, this.p5.height - (2 * i + 1) * this.p5.textSize());
             this.p5.fill(255);

@@ -39,7 +39,7 @@ export class Track {
         this.points = [];
         this.debugBorders = false;
         this.debugInterpolatedHull = false;
-        this.debugHeatmap = true;
+        this.debugHeatmap = false;
 
         this.reset();
     }
@@ -605,5 +605,16 @@ export class Track {
         }
 
         return pointsRemoved;
+    }
+
+    // Given a position on the screen return a score between 0 and 1
+    // 0: near start
+    // 1: near end
+    scorePosition(p: P5.Vector) {
+        if (!this.heatmapImage) {
+            throw new Error("Can't score a position without heatmap");
+        }
+
+        return this.heatmapImage.get(p.x, p.y)[0] / 255;
     }
 }
