@@ -15,7 +15,6 @@ const sketch = (p5: P5) => {
 
     let track;
     let cars;
-    let trackImage;
     let stats;
 
     // The sketch setup method
@@ -97,8 +96,8 @@ const sketch = (p5: P5) => {
     };
 
     const resetTrack = () => {
-        trackImage = null;
         track.reset();
+
         cars = [
             new Car(p5, {
                 pos: track.startingPosition.copy(),
