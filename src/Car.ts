@@ -1,4 +1,5 @@
 import P5 from 'p5';
+import {DNA} from './DNA';
 import {Point} from './Point';
 import {Ray} from './Ray';
 import {Track} from './Track';
@@ -7,7 +8,7 @@ const config = require('./config.json');
 const offTrackColor = config.offTrackColor;
 const initialCarSpeed = config.initialCarSpeed;
 
-export type DriveMode = 'BASIC' | 'PERCENTAGE';
+export type DriveMode = 'BASIC' | 'PERCENTAGE' | 'DNA';
 
 export class Car {
     p5: P5;
@@ -25,6 +26,7 @@ export class Car {
     score: number;
     debugRay: boolean;
     debugTrail: boolean;
+    dna: DNA;
 
     constructor(
         p5: P5,
@@ -32,6 +34,7 @@ export class Car {
             pos: P5.Vector | {x: number; y: number};
             direction: P5.Vector;
             driveMode: DriveMode;
+            dna: DNA;
             debugRay?: boolean;
             debugTrail?: boolean;
         }
@@ -64,10 +67,15 @@ export class Car {
         if (this.driveMode === 'PERCENTAGE') {
             this.color = this.p5.color('#1ebfac');
         }
+        if (this.driveMode === 'DNA') {
+            this.color = this.p5.color('#8048f9');
+        }
         this.score = 0;
 
         this.debugRay = params.debugRay || false;
         this.debugTrail = params.debugTrail || false;
+
+        this.dna = params.dna;
     }
 
     show() {
@@ -155,6 +163,9 @@ export class Car {
             this.driveDecisionPercentage();
             return;
         }
+        if (this.driveMode === 'DNA') {
+            this.driveDecisionDNA();
+        }
     }
 
     driveDecisionPercentage() {
@@ -189,6 +200,21 @@ export class Car {
         }
     }
 
+    driveDecisionDNA() {
+        let right = 0;
+        let left = 0;
+        for (let i = 0; i < this.sensorDistances.length / 2; i++) {
+            left += this.sensorDistances[i];
+            right += this.sensorDistances[this.sensorDistances.length - 1 - i];
+        }
+        const angle = this.dna.turnAngle;
+        if (right > left) {
+            this.turnByAngleDeg(angle);
+        } else {
+            this.turnByAngleDeg(-angle);
+        }
+    }
+
     accelerate() {
         // TODO: Fix the algorithm for progressive acceleration
         const coef = 1 + 1 / ((this.lap * this.lap) % (5 * 5));
@@ -212,6 +238,14 @@ export class Car {
         this.speed.rotate(angle);
         for (const ray of this.rays) {
             ray.dir.rotate(angle);
+        }
+    }
+
+    turnByAngleDeg(angleDeg: number) {
+        this.speed.rotate(this.p5.radians(angleDeg));
+
+        for (const ray of this.rays) {
+            ray.dir.rotate(this.p5.radians(angleDeg));
         }
     }
 

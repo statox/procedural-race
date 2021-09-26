@@ -1,5 +1,6 @@
 import P5 from 'p5';
 import {Car} from './Car';
+import {DNA} from './DNA';
 import {Track} from './Track';
 
 export class Pool {
@@ -27,10 +28,14 @@ export class Pool {
             randomOffset.setMag(randomOffsetMag);
             startingPosition.add(randomOffset);
 
+            const randomAngle = this.p5.random(-40, 40);
+            const dna = new DNA(randomAngle);
+
             const c = new Car(this.p5, {
                 pos: startingPosition,
+                dna,
                 direction: track.startingDirection,
-                driveMode: driveMode
+                driveMode: 'DNA'
             });
             this.cars.push(c);
         }
@@ -53,5 +58,23 @@ export class Pool {
                 this.allCarCrashed = false;
             }
         }
+        if (this.allCarCrashed) {
+            this.endOfGenerationComputation();
+        }
+    }
+
+    endOfGenerationComputation() {
+        const sortedCars = this.cars.sort((c1, c2) => {
+            return c2.score - c1.score;
+        });
+
+        const res = sortedCars.map((c) => {
+            return {
+                score: c.score,
+                angle: c.dna.turnAngle,
+                diff: Math.abs(c.dna.turnAngle - sortedCars[0].dna.turnAngle)
+            };
+        });
+        console.log(res);
     }
 }
