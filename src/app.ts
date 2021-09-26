@@ -2,7 +2,6 @@ import P5 from 'p5';
 import {Car} from './Car';
 import {showCarStats} from './drawingUtils';
 import {Point} from './Point';
-import {Screenshotter} from './Screenshotter';
 import {Stats} from './Stats';
 import './styles.scss';
 import {Track} from './Track';
@@ -16,7 +15,6 @@ const sketch = (p5: P5) => {
 
     let track;
     let cars;
-    let screenshotter;
     let trackImage;
     let stats;
 
@@ -28,8 +26,7 @@ const sketch = (p5: P5) => {
 
         stats = new Stats(p5);
         track = new Track(p5);
-        screenshotter = new Screenshotter(p5);
-        resetTrack();
+        resetCars();
 
         // startInfiniteGeneration();
     };
@@ -89,7 +86,7 @@ const sketch = (p5: P5) => {
 
     p5.keyPressed = () => {
         if (p5.keyCode === p5.RETURN) {
-            resetTrack();
+            resetRace();
         }
     };
 
@@ -101,9 +98,11 @@ const sketch = (p5: P5) => {
         }, 3000);
     };
 
-    const resetTrack = () => {
-        trackImage = null;
-        track.reset();
+    const resetRace = () => {
+        resetTrack();
+        resetCars();
+    };
+    const resetCars = () => {
         cars = [
             new Car(p5, {
                 pos: track.startingPosition.copy(),
@@ -116,6 +115,10 @@ const sketch = (p5: P5) => {
                 driveMode: 'PERCENTAGE'
             })
         ];
+    };
+    const resetTrack = () => {
+        trackImage = null;
+        track.reset();
     };
 
     const drawFPS = () => {
