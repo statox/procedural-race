@@ -44,8 +44,23 @@ export class Pool {
             });
             this.cars.push(c);
         }
+
+        let min = Infinity;
+        let max = -Infinity;
+        let avg = 0;
+        for (let i = 0; i < this.cars.length; i++) {
+            const car = this.cars[i];
+            const angle = car.dna.turnAngle;
+            avg += angle / this.cars.length;
+            if (angle < min) {
+                min = angle;
+            }
+            if (angle > max) {
+                max = angle;
+            }
+        }
+        console.log({avg, min, max});
         /*
-         * console.log(this.cars.map((c) => Number(c.dna.turnAngle.toFixed(2))).sort((a, b) => a - b));
          * this.cars.push(
          *     new Car(this.p5, {
          *         pos: track.interpolatedHull[0].pos.copy(),
@@ -84,32 +99,51 @@ export class Pool {
             return c2.score - c1.score;
         });
 
-        const res = sortedCars.map((c) => {
+        let totalScore = 0;
+        const res = sortedCars.map((c, i) => {
+            if (i < 10) {
+                totalScore += c.score;
+            }
             return {
                 score: c.score,
-                angle: c.dna.turnAngle,
-                diff: Math.abs(c.dna.turnAngle - sortedCars[0].dna.turnAngle)
+                dna: c.dna
             };
         });
-        console.log(res);
+
+        this.dnas = [];
+        const parentIndices = [];
+        for (let i = 0; i < this.size; i++) {
+            let parent1Score = Math.random() * totalScore;
+            let parent2Score = Math.random() * totalScore;
+            let searchScore = 0;
+            let i = 0;
+            let parent1Index;
+            let parent2Index;
+            while (searchScore < parent1Score || searchScore < parent2Score) {
+                searchScore += res[i].score;
+                if (parent1Score <= searchScore) {
+                    parent1Index = i;
+                }
+                if (parent2Score <= searchScore) {
+                    parent2Index = i;
+                }
+                i++;
+            }
+            parentIndices.push(parent1Index);
+            parentIndices.push(parent2Index);
+            const parent1 = res[parent1Index].dna;
+            const parent2 = res[parent2Index].dna;
+            const dna = parent1.mix(parent2);
+            dna.mutate();
+            this.dnas.push(dna);
+        }
     }
 
     generateInitialDNAs() {
         this.dnas = [];
-        /*
-         * const randomAngle = this.p5.random(-40, 40);
-         * const dna = new DNA(randomAngle);
-         * dna.mutate();
-         */
-
-        /*
-         * const dna1 = new DNA(8);
-         * const dna2 = new DNA(11);
-         * const dna = dna1.mix(dna2);
-         */
-
         for (let i = 0; i < this.size; i++) {
-            const dna = new DNA(11);
+            const randomAngle = this.p5.random(-70, 70);
+            const dna = new DNA(randomAngle);
             this.dnas.push(dna);
         }
     }
