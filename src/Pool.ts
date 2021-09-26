@@ -7,19 +7,25 @@ export class Pool {
     p5: P5;
     cars: Car[];
     allCarCrashed: boolean;
+    size: number;
+    dnas: DNA[];
 
     constructor(p5: P5, track: Track) {
         this.p5 = p5;
+        this.size = 100;
+        this.generateInitialDNAs();
         this.reset(track);
     }
 
     reset(track: Track) {
+        if (!this.dnas) {
+            throw new Error("Can't reset pool without generated dnas");
+        }
         this.allCarCrashed = false;
         this.cars = [];
-        for (let i = 0; i < 100; i++) {
-            const driveMode = i % 2 ? 'BASIC' : 'PERCENTAGE';
+        for (let i = 0; i < this.size; i++) {
+            const driveMode = 'DNA';
             const startingPosition = track.interpolatedHull[0].pos.copy();
-            // const startingPosition = track.interpolatedHull[(i * 10) % track.interpolatedHull.length].pos.copy();
 
             const randomOffset = this.p5.createVector();
             randomOffset.x = this.p5.random(-1, 1);
@@ -28,8 +34,7 @@ export class Pool {
             randomOffset.setMag(randomOffsetMag);
             startingPosition.add(randomOffset);
 
-            const randomAngle = this.p5.random(-40, 40);
-            const dna = new DNA(randomAngle);
+            const dna = this.dnas[i];
 
             const c = new Car(this.p5, {
                 pos: startingPosition,
@@ -39,6 +44,17 @@ export class Pool {
             });
             this.cars.push(c);
         }
+        /*
+         * console.log(this.cars.map((c) => Number(c.dna.turnAngle.toFixed(2))).sort((a, b) => a - b));
+         * this.cars.push(
+         *     new Car(this.p5, {
+         *         pos: track.interpolatedHull[0].pos.copy(),
+         *         dna: new DNA(0),
+         *         direction: track.startingDirection,
+         *         driveMode: 'BASIC'
+         *     })
+         * );
+         */
     }
 
     show() {
@@ -76,5 +92,25 @@ export class Pool {
             };
         });
         console.log(res);
+    }
+
+    generateInitialDNAs() {
+        this.dnas = [];
+        /*
+         * const randomAngle = this.p5.random(-40, 40);
+         * const dna = new DNA(randomAngle);
+         * dna.mutate();
+         */
+
+        /*
+         * const dna1 = new DNA(8);
+         * const dna2 = new DNA(11);
+         * const dna = dna1.mix(dna2);
+         */
+
+        for (let i = 0; i < this.size; i++) {
+            const dna = new DNA(11);
+            this.dnas.push(dna);
+        }
     }
 }
