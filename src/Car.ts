@@ -23,8 +23,19 @@ export class Car {
     color: P5.Color;
     driveMode: DriveMode;
     score: number;
+    debugRay: boolean;
+    debugTrail: boolean;
 
-    constructor(p5: P5, params: {pos: P5.Vector | {x: number; y: number}; direction: P5.Vector; driveMode: DriveMode}) {
+    constructor(
+        p5: P5,
+        params: {
+            pos: P5.Vector | {x: number; y: number};
+            direction: P5.Vector;
+            driveMode: DriveMode;
+            debugRay?: boolean;
+            debugTrail?: boolean;
+        }
+    ) {
         this.p5 = p5;
         this.crashed = false;
         if (!params?.pos) {
@@ -54,6 +65,9 @@ export class Car {
             this.color = this.p5.color('#1ebfac');
         }
         this.score = 0;
+
+        this.debugRay = params.debugRay || false;
+        this.debugTrail = params.debugTrail || false;
     }
 
     show() {
@@ -70,19 +84,23 @@ export class Car {
         this.p5.circle(this.pos.x, this.pos.y, 15);
 
         this.p5.stroke(secondaryColor);
-        for (const sensorPoint of this.sensorPoints) {
-            this.p5.line(this.pos.x, this.pos.y, sensorPoint.x, sensorPoint.y);
+        if (this.debugRay) {
+            for (const sensorPoint of this.sensorPoints) {
+                this.p5.line(this.pos.x, this.pos.y, sensorPoint.x, sensorPoint.y);
+            }
         }
 
-        for (let i = 0; i < this.trail.length - 1; i++) {
-            const p = this.trail[i];
-            const q = this.trail[i + 1];
-            this.p5.noStroke();
-            const alpha = this.p5.map(i, 0, this.trail.length, 50, 250);
-            this.p5.fill(secondaryColor);
-            this.p5.circle(p.x, p.y, 3);
-            this.p5.stroke(secondaryColor);
-            this.p5.line(p.x, p.y, q.x, q.y);
+        if (this.debugTrail) {
+            for (let i = 0; i < this.trail.length - 1; i++) {
+                const p = this.trail[i];
+                const q = this.trail[i + 1];
+                this.p5.noStroke();
+                const alpha = this.p5.map(i, 0, this.trail.length, 50, 250);
+                this.p5.fill(secondaryColor);
+                this.p5.circle(p.x, p.y, 3);
+                this.p5.stroke(secondaryColor);
+                this.p5.line(p.x, p.y, q.x, q.y);
+            }
         }
     }
 
