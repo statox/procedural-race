@@ -25,11 +25,48 @@ export class Pool {
 
     reset(track: Track) {
         this.generations--;
+        this.allCarCrashed = false;
+        this.cars = [];
+        this.randomCars = [];
+
+        this.resetDNA(track);
+        if (showRandomCars) {
+            this.resetRandomCars(track);
+        }
+    }
+
+    resetRandomCars(track: Track) {
+        if (!showRandomCars) {
+            return;
+        }
+        for (let i = 0; i < this.size; i++) {
+            const startingPosition = track.interpolatedHull[0].pos.copy();
+            const randomOffset = this.p5.createVector();
+            randomOffset.x = this.p5.random(-1, 1);
+            randomOffset.y = this.p5.random(-1, 1);
+            const randomOffsetMag = this.p5.random(1, track.pathWidth / 2);
+            randomOffset.setMag(randomOffsetMag);
+            startingPosition.add(randomOffset);
+
+            const randomAngle = this.p5.random(-70, 70);
+            const dna = new DNA(randomAngle);
+            this.randomCars.push(
+                new Car(this.p5, {
+                    pos: startingPosition,
+                    dna: dna,
+                    direction: track.startingDirection,
+                    driveMode: 'DNA',
+                    color: this.p5.color('#29ce2e')
+                })
+            );
+        }
+    }
+
+    resetDNA(track: Track) {
+        this.cars = [];
         if (!this.dnas) {
             throw new Error("Can't reset pool without generated dnas");
         }
-        this.allCarCrashed = false;
-        this.cars = [];
         for (let i = 0; i < this.size; i++) {
             const driveMode = 'DNA';
             const startingPosition = track.interpolatedHull[0].pos.copy();
@@ -67,30 +104,10 @@ export class Pool {
             }
         }
         console.log({avg, min, max});
-        this.randomCars = [];
-        if (showRandomCars) {
-            for (let i = 0; i < this.size; i++) {
-                const startingPosition = track.interpolatedHull[0].pos.copy();
-                const randomOffset = this.p5.createVector();
-                randomOffset.x = this.p5.random(-1, 1);
-                randomOffset.y = this.p5.random(-1, 1);
-                const randomOffsetMag = this.p5.random(1, track.pathWidth / 2);
-                randomOffset.setMag(randomOffsetMag);
-                startingPosition.add(randomOffset);
+    }
 
-                const randomAngle = this.p5.random(-70, 70);
-                const dna = new DNA(randomAngle);
-                this.randomCars.push(
-                    new Car(this.p5, {
-                        pos: startingPosition,
-                        dna: dna,
-                        direction: track.startingDirection,
-                        driveMode: 'DNA',
-                        color: this.p5.color('#29ce2e')
-                    })
-                );
-            }
-        }
+    getAllCars() {
+        return [...this.cars, ...this.randomCars];
     }
 
     show() {

@@ -5,7 +5,7 @@
     },
     "offTrackColor": [8, 84, 19],
     "initialCarSpeed": 6,
-    "carMaxSpeed": 30,
+    "carMaxSpeed": 60,
     "carMinSpeed": 0.01,
     "carTurningAngleInDegrees": 10,
     "mutationRate": 0.2,

@@ -61,7 +61,7 @@ const sketch = (p5: P5) => {
     };
 
     const driveCars = () => {
-        for (const car of pool.cars) {
+        for (const car of pool.getAllCars()) {
             driveCar(car);
         }
     };
