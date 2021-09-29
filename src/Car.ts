@@ -7,6 +7,7 @@ const config = require('./config.json');
 
 const offTrackColor = config.offTrackColor;
 const initialCarSpeed = config.initialCarSpeed;
+const maxSpeed = config.carMaxSpeed;
 
 export type DriveMode = 'BASIC' | 'PERCENTAGE' | 'DNA';
 
@@ -14,6 +15,7 @@ export class Car {
     p5: P5;
     pos: P5.Vector;
     speed: P5.Vector;
+    maxSpeedMag: number;
     crashed: boolean;
     rays: Ray[];
     sensorDistances: number[];
@@ -35,6 +37,7 @@ export class Car {
             direction: P5.Vector;
             driveMode: DriveMode;
             dna: DNA;
+            color?: P5.Color;
             debugRay?: boolean;
             debugTrail?: boolean;
         }
@@ -70,25 +73,29 @@ export class Car {
         if (this.driveMode === 'DNA') {
             this.color = this.p5.color('#8048f9');
         }
+        if (params.color) {
+            this.color = params.color;
+        }
         this.score = 0;
 
         this.debugRay = params.debugRay || false;
         this.debugTrail = params.debugTrail || false;
 
         this.dna = params.dna;
+        this.maxSpeedMag = maxSpeed;
     }
 
     show() {
         let color = this.color;
-        if (this.crashed) {
-            color = this.p5.color('red');
-        }
         const secondaryColor = this.p5.color(color.toString());
         secondaryColor.setAlpha(50);
 
         this.p5.stroke(color);
         this.p5.fill(color);
         this.p5.strokeWeight(1);
+        if (this.crashed) {
+            this.p5.stroke('red');
+        }
         this.p5.circle(this.pos.x, this.pos.y, 15);
 
         this.p5.stroke(secondaryColor);
@@ -216,6 +223,13 @@ export class Car {
     }
 
     accelerate() {
+        if (this.speed.mag() === this.maxSpeedMag) {
+            return;
+        }
+        if (this.speed.mag() > this.maxSpeedMag) {
+            this.speed.setMag(this.maxSpeedMag);
+            return;
+        }
         // TODO: Fix the algorithm for progressive acceleration
         const coef = 1 + 1 / ((this.lap * this.lap) % (5 * 5));
         this.speed.mult(coef);
