@@ -7,7 +7,8 @@
     "initialCarSpeed": 6,
     "carMaxSpeed": 60,
     "carMinSpeed": 0.01,
+    "carTTL": 1000,
     "carTurningAngleInDegrees": 10,
     "mutationRate": 0.2,
-    "poolSetReferenceGroup": true
+    "poolSetReferenceGroup": false
 }

@@ -29,7 +29,8 @@ export class Stats {
         this.data = {
             BASIC: {...basicDataObject},
             PERCENTAGE: {...basicDataObject},
-            DNA: {...basicDataObject}
+            DNA: {...basicDataObject},
+            NN: {...basicDataObject}
         };
     }
 

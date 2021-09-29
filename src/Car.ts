@@ -1,16 +1,26 @@
 import P5 from 'p5';
-import {DNA} from './DNA';
+import {DNA, DNA_NN} from './DNA';
 import {Point} from './Point';
 import {Ray} from './Ray';
 import {Track} from './Track';
 const config = require('./config.json');
+const dn = require('dannjs');
 
 const offTrackColor = config.offTrackColor;
 const initialCarSpeed = config.initialCarSpeed;
 
-export type DriveMode = 'BASIC' | 'PERCENTAGE' | 'DNA';
+export const NB_SENSORS = 7; // This is not a dynamic configuration it's used to store the size
+// of this.rays before instanciating a Car
+export type DriveMode = 'BASIC' | 'PERCENTAGE' | 'DNA' | 'NN';
 type WheelInstruction = 'LEFT' | 'NEUTRAL' | 'RIGHT';
 type MotorInstruction = 'ACCELERATE' | 'NEUTRAL' | 'DECELERATE';
+
+const colors: {[k in DriveMode]: string} = {
+    BASIC: '#bfb91e',
+    PERCENTAGE: '#1ebfac',
+    DNA: '#8048f9',
+    NN: '#f4e513'
+};
 
 export class Car {
     p5: P5;
@@ -31,7 +41,8 @@ export class Car {
     score: number;
     debugRay: boolean;
     debugTrail: boolean;
-    dna: DNA;
+    ttl: number;
+    dna: DNA | DNA_NN;
 
     constructor(
         p5: P5,
@@ -39,7 +50,7 @@ export class Car {
             pos: P5.Vector | {x: number; y: number};
             direction: P5.Vector;
             driveMode: DriveMode;
-            dna: DNA;
+            dna: DNA | DNA_NN;
             color?: P5.Color;
             debugRay?: boolean;
             debugTrail?: boolean;
@@ -57,8 +68,7 @@ export class Car {
         this.speed = params.direction.copy().setMag(initialCarSpeed);
 
         this.rays = [];
-        this.crashed = false;
-        for (let a = -45; a < 45; a += 10) {
+        for (let a = -45; a <= 45; a += 15) {
             this.rays.push(new Ray(this.p5, this.pos, this.p5.radians(a) + this.speed.heading()));
         }
         this.trail = [this.pos.copy()];
@@ -67,17 +77,10 @@ export class Car {
 
         this.driveMode = params.driveMode;
         this.color = this.p5.color('white');
-        if (this.driveMode === 'BASIC') {
-            this.color = this.p5.color('#bfb91e');
-        }
-        if (this.driveMode === 'PERCENTAGE') {
-            this.color = this.p5.color('#1ebfac');
-        }
-        if (this.driveMode === 'DNA') {
-            this.color = this.p5.color('#8048f9');
-        }
         if (params.color) {
             this.color = params.color;
+        } else {
+            this.color = this.p5.color(colors[this.driveMode]);
         }
         this.score = 0;
 
@@ -88,10 +91,14 @@ export class Car {
         this.maxSpeedMag = config.carMaxSpeed;
         this.minSpeedMag = config.carMinSpeed;
         this.turnRadiusDeg = config.carTurningAngleInDegrees;
+        this.ttl = config.carTTL;
     }
 
     show() {
         let color = this.color;
+        if (this.crashed) {
+            color.setAlpha(50);
+        }
         const secondaryColor = this.p5.color(color.toString());
         secondaryColor.setAlpha(50);
 
@@ -99,7 +106,7 @@ export class Car {
         this.p5.fill(color);
         this.p5.strokeWeight(1);
         if (this.crashed) {
-            this.p5.stroke('red');
+            this.p5.stroke([255, 0, 0, 50]);
         }
         this.p5.circle(this.pos.x, this.pos.y, 15);
 
@@ -148,6 +155,7 @@ export class Car {
 
     updateTrackInfo(track) {
         this.countLap(track.distance);
+        this.checkTTL();
         this.checkIsOnTrack(track.image);
         this.scoreCurrentPosition(track);
         this.look([track.rightBorder, track.leftBorder]);
@@ -164,6 +172,8 @@ export class Car {
     scoreCurrentPosition(track: Track) {
         const positionScore = track.scorePosition(this.pos);
         this.score += positionScore;
+        // this.score = positionScore + this.lap;
+        // this.score = positionScore * this.traveledDistance;
     }
 
     driveDecision() {
@@ -178,6 +188,44 @@ export class Car {
         if (this.driveMode === 'DNA') {
             this.driveDecisionDNA();
             return;
+        }
+        if (this.driveMode === 'NN') {
+            this.driveDecisionNN();
+            return;
+        }
+    }
+
+    driveDecisionNN() {
+        if (this.dna instanceof DNA) {
+            throw new Error('driveDecisionNN called with incorrect DNA type');
+        }
+        if (!this.dna?.nn) {
+            throw new Error("Can't make a driving decision without neural network");
+        }
+        const prediction = this.dna.nn.feedForward(this.sensorDistances, {log: false, decimals: 2});
+        const [wheelsLeft, wheelsNeutral, wheelsRight, motorAccelerate, motorNeutral, motorDecelerate] = prediction;
+        const maxWheel = Math.max(wheelsLeft, wheelsRight, wheelsNeutral);
+        if (wheelsLeft === maxWheel) {
+            this.wheels('LEFT');
+        } else if (wheelsRight === maxWheel) {
+            this.wheels('RIGHT');
+        } else if (wheelsNeutral === maxWheel) {
+            this.wheels('NEUTRAL');
+        } else {
+            console.error({wheelsLeft, wheelsRight, wheelsNeutral});
+            throw new Error("Couldn't define the largest wheels prediction");
+        }
+
+        const maxMotor = Math.max(motorDecelerate, motorNeutral, motorAccelerate);
+        if (motorDecelerate === maxMotor) {
+            this.motor('DECELERATE');
+        } else if (motorAccelerate === maxMotor) {
+            this.motor('ACCELERATE');
+        } else if (motorNeutral === maxMotor) {
+            this.motor('NEUTRAL');
+        } else {
+            console.error({wheelsLeft, wheelsRight, wheelsNeutral});
+            throw new Error("Couldn't define the largest steering prediction");
         }
     }
 
@@ -355,7 +403,17 @@ export class Car {
             currentColor[0] === offTrackColor[0] &&
             currentColor[1] === offTrackColor[1] &&
             currentColor[2] === offTrackColor[2];
-        this.crashed = colorMatch;
+        if (colorMatch) {
+            this.crashed = true;
+        }
+        return this.crashed;
+    }
+
+    checkTTL() {
+        if (this.ttl <= 0) {
+            this.crashed = true;
+        }
+        this.ttl--;
         return this.crashed;
     }
 }
