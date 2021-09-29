@@ -46,6 +46,7 @@ const sketch = (p5: P5) => {
         stats.show();
 
         drawFPS();
+        driveCars();
 
         if (pool.allCarCrashed) {
             resetTrack();
@@ -59,18 +60,27 @@ const sketch = (p5: P5) => {
         }
     };
 
+    const driveCars = () => {
+        for (const car of pool.cars) {
+            driveCar(car);
+        }
+    };
+
     const driveCar = (car: Car) => {
         if (p5.keyIsDown(p5.LEFT_ARROW)) {
-            car.turn('LEFT');
+            car.wheels('LEFT');
+        } else if (p5.keyIsDown(p5.RIGHT_ARROW)) {
+            car.wheels('RIGHT');
+        } else {
+            car.wheels('NEUTRAL');
         }
-        if (p5.keyIsDown(p5.RIGHT_ARROW)) {
-            car.turn('RIGHT');
-        }
+
         if (p5.keyIsDown(p5.UP_ARROW)) {
-            car.accelerate();
-        }
-        if (p5.keyIsDown(p5.DOWN_ARROW)) {
-            car.deccelerate();
+            car.motor('ACCELERATE');
+        } else if (p5.keyIsDown(p5.DOWN_ARROW)) {
+            car.motor('DECELERATE');
+        } else {
+            car.motor('NEUTRAL');
         }
     };
 

@@ -7,15 +7,18 @@ const config = require('./config.json');
 
 const offTrackColor = config.offTrackColor;
 const initialCarSpeed = config.initialCarSpeed;
-const maxSpeed = config.carMaxSpeed;
 
 export type DriveMode = 'BASIC' | 'PERCENTAGE' | 'DNA';
+type WheelInstruction = 'LEFT' | 'NEUTRAL' | 'RIGHT';
+type MotorInstruction = 'ACCELERATE' | 'NEUTRAL' | 'DECELERATE';
 
 export class Car {
     p5: P5;
     pos: P5.Vector;
     speed: P5.Vector;
     maxSpeedMag: number;
+    minSpeedMag: number;
+    turnRadiusDeg: number;
     crashed: boolean;
     rays: Ray[];
     sensorDistances: number[];
@@ -82,7 +85,9 @@ export class Car {
         this.debugTrail = params.debugTrail || false;
 
         this.dna = params.dna;
-        this.maxSpeedMag = maxSpeed;
+        this.maxSpeedMag = config.carMaxSpeed;
+        this.minSpeedMag = config.carMinSpeed;
+        this.turnRadiusDeg = config.carTurningAngleInDegrees;
     }
 
     show() {
@@ -172,6 +177,7 @@ export class Car {
         }
         if (this.driveMode === 'DNA') {
             this.driveDecisionDNA();
+            return;
         }
     }
 
@@ -201,9 +207,9 @@ export class Car {
             right += this.sensorDistances[this.sensorDistances.length - 1 - i];
         }
         if (right > left) {
-            this.turn('RIGHT');
+            this.wheels('RIGHT');
         } else {
-            this.turn('LEFT');
+            this.wheels('LEFT');
         }
     }
 
@@ -223,21 +229,46 @@ export class Car {
     }
 
     accelerate() {
-        if (this.speed.mag() === this.maxSpeedMag) {
-            return;
-        }
-        if (this.speed.mag() > this.maxSpeedMag) {
-            this.speed.setMag(this.maxSpeedMag);
-            return;
-        }
-        // TODO: Fix the algorithm for progressive acceleration
-        const coef = 1 + 1 / ((this.lap * this.lap) % (5 * 5));
-        this.speed.mult(coef);
-        // this.speed.mult(1.1);
+        this.motor('ACCELERATE');
     }
 
     deccelerate() {
-        this.speed.mult(0.9);
+        this.motor('DECELERATE');
+    }
+
+    motor(instruction: MotorInstruction) {
+        if (instruction === 'NEUTRAL') {
+            return;
+        }
+        let diff;
+        if (instruction === 'ACCELERATE') {
+            diff = 1;
+        }
+        if (instruction === 'DECELERATE') {
+            diff = -1;
+        }
+        const currentSpeed = this.speed.mag();
+        const newSpeed = currentSpeed + diff;
+        if (newSpeed < this.maxSpeedMag && newSpeed > this.minSpeedMag) {
+            this.speed.setMag(newSpeed);
+        }
+    }
+
+    wheels(instruction: WheelInstruction) {
+        if (instruction === 'NEUTRAL') {
+            return;
+        }
+        let diff;
+        if (instruction === 'LEFT') {
+            diff = -this.p5.radians(10);
+        }
+        if (instruction === 'RIGHT') {
+            diff = this.p5.radians(10);
+        }
+        this.speed.rotate(diff);
+        for (const ray of this.rays) {
+            ray.dir.rotate(diff);
+        }
     }
 
     // Percentage: [-1, 1]
