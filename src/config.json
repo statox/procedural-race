@@ -6,5 +6,6 @@
     "offTrackColor": [8, 84, 19],
     "initialCarSpeed": 6,
     "carMaxSpeed": 30,
-    "mutationRate": 0.2
+    "mutationRate": 0.2,
+    "poolSetReferenceGroup": true
 }

@@ -2,10 +2,14 @@ import P5 from 'p5';
 import {Car} from './Car';
 import {DNA} from './DNA';
 import {Track} from './Track';
+const config = require('./config.json');
+
+const showRandomCars = config.poolSetReferenceGroup;
 
 export class Pool {
     p5: P5;
     cars: Car[];
+    randomCars: Car[];
     allCarCrashed: boolean;
     size: number;
     dnas: DNA[];
@@ -63,35 +67,66 @@ export class Pool {
             }
         }
         console.log({avg, min, max});
-        /*
-         * this.cars.push(
-         *     new Car(this.p5, {
-         *         pos: track.interpolatedHull[0].pos.copy(),
-         *         dna: new DNA(0),
-         *         direction: track.startingDirection,
-         *         driveMode: 'BASIC'
-         *     })
-         * );
-         */
+        this.randomCars = [];
+        if (showRandomCars) {
+            for (let i = 0; i < this.size; i++) {
+                const startingPosition = track.interpolatedHull[0].pos.copy();
+                const randomOffset = this.p5.createVector();
+                randomOffset.x = this.p5.random(-1, 1);
+                randomOffset.y = this.p5.random(-1, 1);
+                const randomOffsetMag = this.p5.random(1, track.pathWidth / 2);
+                randomOffset.setMag(randomOffsetMag);
+                startingPosition.add(randomOffset);
+
+                const randomAngle = this.p5.random(-70, 70);
+                const dna = new DNA(randomAngle);
+                this.randomCars.push(
+                    new Car(this.p5, {
+                        pos: startingPosition,
+                        dna: dna,
+                        direction: track.startingDirection,
+                        driveMode: 'DNA',
+                        color: this.p5.color('#29ce2e')
+                    })
+                );
+            }
+        }
     }
 
     show() {
         for (const car of this.cars) {
             car.show();
         }
+        for (const car of this.randomCars) {
+            car.show();
+        }
     }
 
     update(track: Track) {
         this.allCarCrashed = true;
+        let allLearningCarsCrashed = true;
         for (const car of this.cars) {
             car.update();
             car.updateTrackInfo(track);
             car.driveDecision();
 
             if (!car.crashed) {
-                this.allCarCrashed = false;
+                allLearningCarsCrashed = false;
             }
         }
+
+        let allRandomCarsCrashed = true;
+        for (const car of this.randomCars) {
+            car.update();
+            car.updateTrackInfo(track);
+            car.driveDecision();
+
+            if (!car.crashed) {
+                allRandomCarsCrashed = false;
+            }
+        }
+
+        this.allCarCrashed = allLearningCarsCrashed && allRandomCarsCrashed;
         if (this.allCarCrashed) {
             this.endOfGenerationComputation();
         }
