@@ -39,7 +39,7 @@ export class Track {
         this.points = [];
         this.debugBorders = false;
         this.debugInterpolatedHull = false;
-        this.debugHeatmap = false;
+        this.debugHeatmap = true;
 
         this.reset();
     }
@@ -208,17 +208,32 @@ export class Track {
                 // Check the index of the closest point on the hull for this pixel
                 let minDistance = Infinity;
                 let closestPointOnHull;
+                let closestPointOnHullDistanceFromStart;
+                let distanceFromStart = 0;
                 for (let k = 0; k < this.interpolatedHull.length; k++) {
                     const pos = this.interpolatedHull[k].pos;
                     const sqrDist = (i - pos.x) * (i - pos.x) + (j - pos.y) * (j - pos.y);
                     const dist = Math.sqrt(sqrDist);
+                    if (k > 0) {
+                        distanceFromStart += this.interpolatedHull[k].pos.dist(this.interpolatedHull[k - 1].pos);
+                    }
                     if (sqrDist < minDistance) {
                         minDistance = sqrDist;
                         closestPointOnHull = k;
+                        closestPointOnHullDistanceFromStart = distanceFromStart;
                     }
                 }
-                // Set the color level depending on the position of the closest point on hull
-                const colorLevel = this.p5.map(closestPointOnHull, 0, this.interpolatedHull.length, 0, 255);
+                // Set the color level depending on the distance between the starting line and the closest point on hull
+                // This allows to have a uniform gradient (otherwise, as their are more points around the corners than
+                // in the straight line, the gradient is not uniform)
+                // We also divide by this.interpolatedHull.length/10 to create sections of same score
+                const colorLevel = this.p5.map(
+                    Math.floor(closestPointOnHullDistanceFromStart / (this.interpolatedHull.length / 10)),
+                    0,
+                    this.distance / (this.interpolatedHull.length / 10),
+                    0,
+                    255
+                );
                 heatmapImg.set(i, j, this.p5.color([colorLevel, 0, 0, 150]));
             }
         }
